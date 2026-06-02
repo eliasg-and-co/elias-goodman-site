@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Elias Goodman</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Syne:wght@400..800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+      --bg:#f4f1ec; --bg2:#ece8e1;
+      --ink:#1c1917; --ink-mid:#6b6560;
+      --ink-light:#b5afa8; --ink-faint:#ddd8d0;
+      --writing-stroke:#4a6fa5; --writing-bg:#edf1f8; --writing-border:#c2d0e8;
+      --doux-stroke:#3d7a5a;   --doux-bg:#edf5f0;    --doux-border:#b8d9c8;
+      --music-stroke:#c4612a;  --music-bg:#f8f0ea;   --music-border:#e8c4a8;
+      --contact-stroke:#7c5ca8;--contact-bg:#f3eff8; --contact-border:#d4c4e8;
+      --serif:'Fraunces',Georgia,serif;
+      --mono:'Syne','Arial',sans-serif;
+    }
+    html.dark {
+      --bg:#14120f; --bg2:#1e1c18;
+      --ink:#e8e4dc; --ink-mid:#9b9590;
+      --ink-light:#4a4742; --ink-faint:#2a2825;
+      --writing-bg:#1a2030; --writing-border:#2a3a55;
+      --doux-bg:#182820;    --doux-border:#2a4a38;
+      --music-bg:#2a1810;   --music-border:#4a2a18;
+      --contact-bg:#201828; --contact-border:#3a2848;
+    }
+    html,body { width:100%; height:100%; overflow:hidden; background:var(--bg); font-family:var(--serif); color:var(--ink); transition:background .6s ease,color .6s ease; }
+    body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:0; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E"); }
+
+    @media (hover:hover) and (pointer:fine) {
+      body { cursor:none; }
+      #cursor { position:fixed; width:8px; height:8px; background:var(--ink); border-radius:50%; pointer-events:none; z-index:9999; transform:translate(-50%,-50%); mix-blend-mode:difference; }
+      #cursor.hovering { width:24px; height:24px; background:transparent; border:1.5px solid var(--ink-mid); }
+      #cursor.dragging { width:10px; height:10px; background:var(--ink-mid); }
+    }
+    @media (hover:none) { #cursor { display:none!important; } }
+
+    #stage { position:fixed; inset:0; z-index:1; }
+    .corners { position:absolute; inset:0; pointer-events:none; opacity:0.1; }
+
+    #name-block { position:absolute; top:36px; left:48px; z-index:2; opacity:0; animation:fi .5s ease .05s forwards; }
+    .site-name { font-family:var(--serif); font-weight:300; font-style:italic; font-size:clamp(38px,5.5vw,72px); line-height:1; letter-spacing:-.02em; color:var(--ink); user-select:none; }
+    .site-tagline { font-family:var(--mono); font-size:8px; font-weight:400; letter-spacing:.2em; color:var(--ink-light); text-transform:uppercase; margin-top:9px; }
+
+    #mute-btn { position:fixed; top:50px; right:48px; z-index:20; font-family:var(--mono); font-size:11px; font-weight:600; letter-spacing:.2em; color:var(--ink-light); background:none; border:none; padding:4px 0; text-transform:uppercase; transition:color .2s; white-space:nowrap; opacity:0; animation:fi .5s ease .05s forwards; }
+    @media (hover:hover) and (pointer:fine) { #mute-btn { cursor:none; } }
+    @media (hover:none) { #mute-btn { cursor:pointer; right:24px; } }
+    #mute-btn:hover { color:var(--ink); }
+    #mute-btn.playing { color:var(--ink-mid); }
+    #mute-btn.playing::before { content:''; position:absolute; top:50%; left:-14px; transform:translateY(-50%); width:6px; height:6px; border-radius:50%; background:var(--music-stroke); animation:pulse 1.8s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:.3;transform:translateY(-50%) scale(0.8)} 50%{opacity:1;transform:translateY(-50%) scale(1.2)} }
+
+    #drop-zone { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:210px; height:210px; border:1.5px dashed var(--ink-light); border-radius:50%; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:3; transition:border-color .25s,background .25s,transform .25s; opacity:0; animation:fi .5s ease .2s forwards; }
+    #drop-zone.active { border-color:var(--ink-mid); background:color-mix(in srgb,var(--ink-faint) 40%,transparent); }
+    #drop-zone.ready  { border-color:var(--ink); border-style:solid; background:color-mix(in srgb,var(--ink-faint) 60%,transparent); transform:translate(-50%,-50%) scale(1.04); }
+    #drop-zone.locked { border-color:var(--ink); border-style:solid; background:color-mix(in srgb,var(--ink-faint) 40%,transparent); transform:translate(-50%,-50%); }
+    .zone-label { font-family:var(--mono); font-size:9px; font-weight:400; letter-spacing:.18em; color:var(--ink-light); text-transform:uppercase; text-align:center; line-height:1.8; user-select:none; transition:opacity .2s; }
+
+    .icon { position:absolute; width:92px; display:flex; flex-direction:column; align-items:center; gap:9px; user-select:none; z-index:5; opacity:0; animation:fi .5s ease .35s forwards; }
+    @media (hover:hover) and (pointer:fine) { .icon { cursor:none; } }
+    @media (hover:none) { .icon { cursor:pointer; } }
+    #icon-writing  { top:28%; left:14%; }
+    #icon-doux     { top:28%; right:14%; }
+    #icon-music    { top:62%; left:14%; }
+    #icon-contact  { top:62%; right:14%; }
+    .icon.in-zone  { position:fixed!important; z-index:6!important; pointer-events:none; }
+    .icon-circle { width:72px; height:72px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:1.5px solid var(--ink-faint); background:var(--bg2); transition:transform .2s cubic-bezier(0.34,1.56,0.64,1),background .2s,border-color .2s; }
+    .icon-circle svg { width:26px; height:26px; stroke:var(--ink-light); fill:none; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; transition:stroke .2s; }
+    .icon-label { font-family:var(--mono); font-size:9px; font-weight:400; letter-spacing:.18em; color:var(--ink-light); text-transform:uppercase; text-align:center; transition:color .2s; }
+    #icon-writing:hover .icon-circle,#icon-writing.dragging-now .icon-circle { background:var(--writing-bg);border-color:var(--writing-border);transform:scale(1.08) rotate(-2deg); }
+    #icon-writing:hover .icon-circle svg,#icon-writing.dragging-now .icon-circle svg { stroke:var(--writing-stroke); }
+    #icon-writing:hover .icon-label { color:var(--writing-stroke); }
+    #icon-doux:hover .icon-circle,#icon-doux.dragging-now .icon-circle { background:var(--doux-bg);border-color:var(--doux-border);transform:scale(1.08) rotate(2deg); }
+    #icon-doux:hover .icon-circle svg,#icon-doux.dragging-now .icon-circle svg { stroke:var(--doux-stroke); }
+    #icon-doux:hover .icon-label { color:var(--doux-stroke); }
+    #icon-music:hover .icon-circle,#icon-music.dragging-now .icon-circle { background:var(--music-bg);border-color:var(--music-border);transform:scale(1.08) rotate(-2deg); }
+    #icon-music:hover .icon-circle svg,#icon-music.dragging-now .icon-circle svg { stroke:var(--music-stroke); }
+    #icon-music:hover .icon-label { color:var(--music-stroke); }
+    #icon-contact:hover .icon-circle,#icon-contact.dragging-now .icon-circle { background:var(--contact-bg);border-color:var(--contact-border);transform:scale(1.08) rotate(2deg); }
+    #icon-contact:hover .icon-circle svg,#icon-contact.dragging-now .icon-circle svg { stroke:var(--contact-stroke); }
+    #icon-contact:hover .icon-label { color:var(--contact-stroke); }
+    .icon.dragging-now { z-index:8; }
+
+    #bio-canvas-wrap { position:fixed; inset:0; z-index:4; opacity:0; animation:fi .5s ease .5s forwards; pointer-events:none; overflow:visible; }
+    canvas#bio-canvas { display:block; }
+
+    .overlay { display:none; position:fixed; inset:0; z-index:200; align-items:center; justify-content:center; background:color-mix(in srgb,var(--bg) 88%,transparent); backdrop-filter:blur(8px); }
+    .overlay.open { display:flex; animation:oIn .25s ease; }
+    @keyframes oIn { from{opacity:0} to{opacity:1} }
+    .overlay-card { background:var(--bg); border:1px solid var(--ink-faint); width:min(500px,92vw); max-height:88vh; overflow-y:auto; box-shadow:3px 4px 0 var(--ink-faint); animation:cIn .25s ease; }
+    @keyframes cIn { from{transform:translateY(10px);opacity:0} to{transform:translateY(0);opacity:1} }
+    #overlay-doux .overlay-card { width:min(960px,96vw); max-height:94vh; }
+    .doux-embed { width:100%; height:70vh; min-height:400px; border:none; display:block; background:var(--ink); }
+    .overlay-header { display:flex; align-items:center; justify-content:space-between; padding:18px 22px 14px; border-bottom:1px solid var(--ink-faint); position:sticky; top:0; background:var(--bg); z-index:1; }
+    .overlay-title { font-family:var(--serif); font-style:italic; font-weight:300; font-size:22px; letter-spacing:-.01em; }
+    .overlay-close { font-family:var(--mono); font-size:8px; font-weight:400; color:var(--ink-light); background:none; border:none; letter-spacing:.12em; transition:color .15s; padding:4px 6px; cursor:pointer; }
+    .overlay-close:hover { color:var(--ink); }
+    .overlay-body { padding:22px; }
+    .essay-item { display:grid; grid-template-columns:1fr auto; align-items:baseline; gap:16px; padding:13px 0; border-bottom:1px solid var(--ink-faint); text-decoration:none; color:inherit; transition:all .15s; }
+    .essay-item:first-child { border-top:1px solid var(--ink-faint); }
+    .essay-title { font-family:var(--serif); font-size:16px; font-style:italic; font-weight:300; color:var(--ink-mid); transition:color .15s; letter-spacing:-.01em; }
+    .essay-item:hover .essay-title { color:var(--writing-stroke); }
+    .essay-date { font-family:var(--mono); font-size:8px; font-weight:400; color:var(--ink-light); letter-spacing:.1em; }
+    .doux-link { font-family:var(--mono); font-size:9px; font-weight:400; color:var(--doux-stroke); text-decoration:none; display:block; margin-top:14px; }
+    .doux-desc-text { font-family:var(--mono); font-size:9px; font-weight:400; line-height:1.9; color:var(--ink-mid); margin-top:8px; }
+    .music-track-item { display:grid; grid-template-columns:18px 1fr auto; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--ink-faint); }
+    .music-track-item:first-of-type { border-top:1px solid var(--ink-faint); margin-top:16px; }
+    .music-num { font-family:var(--mono); font-size:8px; font-weight:400; color:var(--ink-light); }
+    .music-name { font-family:var(--serif); font-style:italic; font-weight:300; font-size:16px; letter-spacing:-.01em; }
+    .music-status { font-family:var(--mono); font-size:8px; font-weight:400; color:var(--ink-light); letter-spacing:.1em; }
+    .contact-field { display:flex; flex-direction:column; gap:5px; margin-bottom:14px; }
+    .contact-field label { font-family:var(--mono); font-size:7px; font-weight:400; letter-spacing:.2em; color:var(--ink-light); text-transform:uppercase; }
+    .contact-field input,.contact-field textarea { background:var(--bg2); border:1px solid var(--ink-faint); padding:9px 11px; font-family:var(--serif); font-size:15px; font-weight:300; color:var(--ink); outline:none; resize:none; transition:border-color .15s; cursor:auto; }
+    .contact-field input:focus,.contact-field textarea:focus { border-color:var(--contact-stroke); }
+    .contact-submit { font-family:var(--mono); font-size:8px; font-weight:400; letter-spacing:.2em; text-transform:uppercase; background:var(--ink); color:var(--bg); border:none; padding:11px 22px; cursor:pointer; width:100%; margin-top:6px; transition:background .15s; }
+    .contact-submit:hover { background:var(--contact-stroke); }
+    .contact-email { font-family:var(--mono); font-size:8px; font-weight:400; color:var(--ink-light); margin-top:10px; letter-spacing:.08em; }
+    .contact-email a { color:var(--contact-stroke); text-decoration:none; }
+
+    @keyframes fi { to{opacity:1} }
+
+    #social-links { position:fixed; bottom:36px; left:50%; transform:translateX(-50%); z-index:20; display:flex; align-items:center; gap:18px; opacity:0; animation:fi .5s ease .6s forwards; }
+    .social-link { display:flex; align-items:center; justify-content:center; opacity:0.4; transition:opacity .2s; }
+    .social-link:hover { opacity:1; }
+    .social-link svg { width:16px; height:16px; fill:var(--ink); transition:fill .2s; }
+    .social-link[aria-label="LinkedIn"]:hover svg  { fill:#0a66c2; }
+    .social-link[aria-label="Instagram"]:hover svg  { fill:url(#ig-grad); }
+    .social-link[aria-label="TikTok"]:hover svg     { fill:#161823; }
+    .social-link[aria-label="Substack"]:hover svg   { fill:#ff6719; }
+    @media (hover:hover) and (pointer:fine) { .social-link { cursor:none; } }
+    @media (hover:none) {
+      #social-links { bottom:20px; gap:20px; transform:translateX(calc(-50% - 12px)); }
+      .social-link svg { width:18px; height:18px; }
+    }
+
+    @media (hover:none) {
+      #name-block { left:24px; top:28px; }
+      #mute-btn { top:28px; }
+      #icon-writing  { top:17%; left:8%; }
+      #icon-doux     { top:17%; right:8%; }
+      #icon-music    { top:53%; left:8%; }
+      #icon-contact  { top:53%; right:8%; }
+      #drop-zone { width:155px; height:155px; top:40%; }
+    }
+  </style>
+</head>
+<body>
+<div id="cursor"></div>
+<div id="stage">
+  <svg class="corners" xmlns="http://www.w3.org/2000/svg">
+    <path d="M44 18 L20 18 L20 44" stroke="currentColor" stroke-width="1" fill="none" stroke-linecap="round"/>
+    <path d="M44 18 L20 18 L20 44" stroke="currentColor" stroke-width="1" fill="none" stroke-linecap="round" transform="translate(100%,0) scale(-1,1)"/>
+    <path d="M44 18 L20 18 L20 44" stroke="currentColor" stroke-width="1" fill="none" stroke-linecap="round" transform="translate(0,100%) scale(1,-1)"/>
+    <path d="M44 18 L20 18 L20 44" stroke="currentColor" stroke-width="1" fill="none" stroke-linecap="round" transform="translate(100%,100%) scale(-1,-1)"/>
+  </svg>
+  <div id="name-block">
+    <div class="site-name">Elias Goodman</div>
+    <div class="site-tagline">Brooklyn, NY</div>
+  </div>
+  <button id="mute-btn" onclick="toggleAudio()">[ play ]</button>
+  <div id="drop-zone"><div class="zone-label" id="zone-label">drag here<br>to open</div></div>
+  <div class="icon" id="icon-writing" data-target="overlay-writing">
+    <div class="icon-circle"><svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
+    <div class="icon-label">writing</div>
+  </div>
+  <div class="icon" id="icon-doux" data-target="overlay-doux">
+    <div class="icon-circle"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></div>
+    <div class="icon-label">doux</div>
+  </div>
+  <div class="icon" id="icon-music" data-target="overlay-music">
+    <div class="icon-circle"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
+    <div class="icon-label">eegee</div>
+  </div>
+  <div class="icon" id="icon-contact" data-target="overlay-contact">
+    <div class="icon-circle"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+    <div class="icon-label">contact</div>
+  </div>
+  <div id="social-links">
+    <a class="social-link" href="https://www.linkedin.com/in/eliasgoodman/" target="_blank" aria-label="LinkedIn">
+      <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+    </a>
+    <a class="social-link" href="https://www.instagram.com/eliasgoodman/" target="_blank" aria-label="Instagram">
+      <svg viewBox="0 0 24 24">
+        <defs><linearGradient id="ig-grad" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#f09433"/><stop offset="25%" style="stop-color:#e6683c"/><stop offset="50%" style="stop-color:#dc2743"/><stop offset="75%" style="stop-color:#cc2366"/><stop offset="100%" style="stop-color:#bc1888"/></linearGradient></defs>
+        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+      </svg>
+    </a>
+    <a class="social-link" href="https://tiktok.com/@doux..live" target="_blank" aria-label="TikTok">
+      <svg viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
+    </a>
+    <a class="social-link" href="https://eegee.substack.com" target="_blank" aria-label="Substack">
+      <svg viewBox="0 0 24 24"><path d="M22.539 8.242H1.46V5.406h21.08v2.836zM1.46 10.812V24L12 18.11 22.54 24V10.812H1.46zM22.54 0H1.46v2.836h21.08V0z"/></svg>
+    </a>
+  </div>
+</div>
+
+<div id="bio-canvas-wrap"><canvas id="bio-canvas"></canvas></div>
+
+<div class="overlay" id="overlay-writing">
+  <div class="overlay-card">
+    <div class="overlay-header"><div class="overlay-title">writing</div><button class="overlay-close" onclick="closeOverlay('overlay-writing')">close ×</button></div>
+    <div class="overlay-body">
+      <a class="essay-item" href="https://eegee.substack.com/p/songs-are-a-prison" target="_blank"><span class="essay-title">Songs Are a Prison</span><span class="essay-date">2026</span></a>
+      <a class="essay-item" href="https://eegee.substack.com/p/02-what-the-blizzard-composed" target="_blank"><span class="essay-title">What the Blizzard Composed</span><span class="essay-date">2026</span></a>
+      <a class="essay-item" href="https://eegee.substack.com/p/post-experiment-01-say-when-for-ai" target="_blank"><span class="essay-title">Say When for AI in Music</span><span class="essay-date">2025</span></a>
+      <a class="essay-item" href="https://eegee.substack.com" target="_blank"><span class="essay-title">Music Used to Be Tribal</span><span class="essay-date">forthcoming</span></a>
+      <a class="essay-item" href="https://eegee.substack.com" target="_blank"><span class="essay-title">All essays →</span><span class="essay-date">Substack</span></a>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="overlay-doux">
+  <div class="overlay-card">
+    <div class="overlay-header"><div class="overlay-title">doux</div><button class="overlay-close" onclick="closeOverlay('overlay-doux')">close ×</button></div>
+    <div class="overlay-body" style="padding:0;">
+      <iframe class="doux-embed" src="https://doux.studio" title="doux" allow="autoplay"></iframe>
+      <div style="padding:16px 22px;">
+        <a class="doux-link" href="https://doux.studio" target="_blank">open doux.studio ↗</a>
+        <p class="doux-desc-text">A music format modulated in real time by live environmental and financial data. Every listening instance is unrepeatable. The track you hear today will never exist again.</p>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="overlay-music">
+  <div class="overlay-card">
+    <div class="overlay-header"><div class="overlay-title">eegee</div><button class="overlay-close" onclick="closeOverlay('overlay-music')">close ×</button></div>
+    <div class="overlay-body">
+      <iframe width="100%" height="166" scrolling="no" frameborder="no" allow="autoplay; encrypted-media" src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/eliasgoodman/rod-hype-vip-137bpm&color=%23c4612a&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=true"></iframe>
+      <div class="music-track-item"><span class="music-num">I</span><span class="music-name">blizzard</span><span class="music-status">coming soon</span></div>
+      <div class="music-track-item"><span class="music-num">II</span><span class="music-name">salted road</span><span class="music-status">coming soon</span></div>
+      <div class="music-track-item"><span class="music-num">III</span><span class="music-name">set 66</span><span class="music-status">coming soon</span></div>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="overlay-contact">
+  <div class="overlay-card">
+    <div class="overlay-header"><div class="overlay-title">get in touch</div><button class="overlay-close" onclick="closeOverlay('overlay-contact')">close ×</button></div>
+    <div class="overlay-body">
+      <div class="contact-field"><label>name</label><input type="text" placeholder="—"></div>
+      <div class="contact-field"><label>email</label><input type="email" placeholder="—"></div>
+      <div class="contact-field"><label>message</label><textarea rows="5" placeholder="—"></textarea></div>
+      <button class="contact-submit" onclick="handleContact(this)">send →</button>
+      <p class="contact-email">or: <a href="mailto:esg444@gmail.com">esg444@gmail.com</a></p>
+    </div>
+  </div>
+</div>
+
+<script>
+const isMobile = window.matchMedia('(hover:none)').matches;
+const cursor = document.getElementById('cursor');
+if (!isMobile && cursor) {
+  document.addEventListener('mousemove', e => { cursor.style.left=e.clientX+'px'; cursor.style.top=e.clientY+'px'; }, {passive:true});
+}
+function bindHover(scope) {
+  if (isMobile) return;
+  (scope.querySelectorAll ? scope.querySelectorAll('a,button,.icon,.social-link') : []).forEach(el => {
+    el.addEventListener('mouseenter', () => cursor && cursor.classList.add('hovering'));
+    el.addEventListener('mouseleave', () => cursor && cursor.classList.remove('hovering'));
+  });
+}
+bindHover(document);
+
+// ── THEME ──
+function getSunTimes() {
+  const rad=Math.PI/180, lat=40.6782, lon=-73.9442, d=new Date();
+  const day=Math.floor((d-new Date(d.getFullYear(),0,0))/86400000);
+  const B=(360/365)*(day-81)*rad;
+  const EoT=9.87*Math.sin(2*B)-7.53*Math.cos(B)-1.5*Math.sin(B);
+  const noon=720-4*lon-EoT;
+  const decl=23.45*Math.sin(rad*(360/365)*(day-81));
+  const HA=Math.acos(-Math.tan(lat*rad)*Math.tan(decl*rad))/rad;
+  return {sunrise:(noon-4*HA)/60,sunset:(noon+4*HA)/60};
+}
+function checkSunTheme() {
+  const now=new Date(), h=now.getHours()+now.getMinutes()/60;
+  const {sunrise,sunset}=getSunTimes();
+  document.documentElement.classList.toggle('dark',h<sunrise||h>=sunset);
+}
+checkSunTheme(); setInterval(checkSunTheme,300000);
+
+// ── AUDIO ──
+let audioCtx=null,analyser=null,source=null,audioBuffer=null,audioPlaying=false,gainNode=null,smoothAmp=0;
+async function initAudio() {
+  if(audioCtx) return;
+  audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  analyser=audioCtx.createAnalyser(); analyser.fftSize=256; analyser.smoothingTimeConstant=0.85;
+  gainNode=audioCtx.createGain(); gainNode.gain.value=0.7;
+  analyser.connect(gainNode); gainNode.connect(audioCtx.destination);
+  try { const r=await fetch('./loop.mp3'); audioBuffer=await audioCtx.decodeAudioData(await r.arrayBuffer()); } catch(e){}
+}
+function playAudio() {
+  if(!audioBuffer||!audioCtx) return;
+  source=audioCtx.createBufferSource(); source.buffer=audioBuffer; source.loop=true;
+  source.connect(analyser); source.start(0); audioPlaying=true;
+}
+async function toggleAudio() {
+  await initAudio(); if(!audioCtx) return;
+  const btn=document.getElementById('mute-btn');
+  if(!audioPlaying) {
+    if(source){await audioCtx.resume();audioPlaying=true;}
+    else{if(audioCtx.state==='suspended')await audioCtx.resume();playAudio();}
+    btn.textContent='[ mute ]'; btn.classList.add('playing');
+  } else {
+    await audioCtx.suspend(); audioPlaying=false;
+    btn.textContent='[ play ]'; btn.classList.remove('playing');
+  }
+}
+const freqData=new Uint8Array(128);
+function getAmplitude() {
+  if(!analyser||!audioPlaying) return 0;
+  analyser.getByteFrequencyData(freqData);
+  let b=0; for(let i=2;i<12;i++) b+=freqData[i];
+  return b/(10*255);
+}
+
+// ── MAGNETIC BIO ──
+const BIO_TEXT = "I make electronic music and I've spent five years in finance watching creative work get turned into a tradeable commodity. The frozen song is the only music product we've been sold in our lifetimes, and it's the root of the problems the industry and artistry face. doux is my attempt at building a new format of living music: modulated at the stem level in real time by the world around you, unrepeatable by design, and structurally resistant to the logic that's hollowing out our listening experience.";
+
+const bioCanvas = document.getElementById('bio-canvas');
+const bctx = bioCanvas.getContext('2d');
+
+const FONT_SIZE = 14.5;
+const LINE_H = FONT_SIZE * 1.72;
+const FONT = `italic 300 ${FONT_SIZE}px "Fraunces", Georgia, serif`;
+
+let canvasW = 0, canvasH = 0;
+let words = [];
+
+function setupBioCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  canvasW = w; canvasH = h;
+  bioCanvas.width = w * dpr;
+  bioCanvas.height = h * dpr;
+  bioCanvas.style.width = w + 'px';
+  bioCanvas.style.height = h + 'px';
+  bctx.setTransform(1,0,0,1,0,0);
+  bctx.scale(dpr, dpr);
+  layoutWords();
+}
+
+function layoutWords() {
+  bctx.font = FONT;
+  const tokens = BIO_TEXT.split(' ');
+  words = [];
+  const margin = isMobile ? 24 : 48;
+  const maxW = canvasW - margin * 2;
+  const homeTop = canvasH * (isMobile ? 0.70 : 0.78);
+  let x = margin, lineIdx = 0;
+
+  for (let i = 0; i < tokens.length; i++) {
+    const w = tokens[i];
+    const ww = bctx.measureText(w + ' ').width;
+    if (x + ww > margin + maxW && x > margin) { x = margin; lineIdx++; }
+    const hx = x, hy = homeTop + lineIdx * LINE_H + FONT_SIZE;
+    words.push({ text: w, homeX: hx, homeY: hy, x: hx, y: hy, vx: 0, vy: 0 });
+    x += ww;
+  }
+}
+
+let magnetPos = null;
+let magnetStrength = 0;
+let magnetPower = 1.0;
+let repelPositions = [];
+
+function updateWords(amp) {
+  const targetStrength = magnetPos ? 1 : 0;
+  magnetStrength += (targetStrength - magnetStrength) * 0.12;
+
+  repelPositions = [];
+  document.querySelectorAll('.social-link').forEach(el => {
+    const r = el.getBoundingClientRect();
+    repelPositions.push({ x: r.left + r.width/2, y: r.top + r.height/2 });
+  });
+
+  const isDark = document.documentElement.classList.contains('dark');
+  bctx.clearRect(0, 0, canvasW + 4, canvasH * 3);
+  bctx.font = FONT;
+  bctx.fillStyle = isDark ? 'rgba(232,228,220,0.85)' : 'rgba(28,25,23,0.82)';
+
+  const PULL_RANGE = 220 + magnetPower * 60;
+  const PULL_STRENGTH = 0.18;
+  const SPRING = 0.08;
+  const DAMPING = 0.72;
+
+  for (const word of words) {
+    if (magnetPos && magnetStrength > 0.01) {
+      const dx = magnetPos.x - word.x;
+      const dy = magnetPos.y - word.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < PULL_RANGE) {
+        const influence = Math.max(0, 1 - dist/PULL_RANGE);
+        const falloff = magnetPower > 1.2
+          ? influence * influence * influence
+          : influence * influence;
+        const pull = falloff * PULL_STRENGTH * magnetStrength * magnetPower;
+        word.vx += dx * pull;
+        word.vy += dy * pull;
+      } else if (magnetPower > 1.2 && dist < PULL_RANGE * 2) {
+        const outerInfluence = Math.max(0, 1 - dist/(PULL_RANGE*2)) * 0.015 * magnetStrength;
+        word.vx += (dx/dist) * outerInfluence;
+        word.vy += (dy/dist) * outerInfluence;
+      }
+    }
+
+    word.vx += (word.homeX - word.x) * SPRING;
+    word.vy += (word.homeY - word.y) * SPRING;
+
+    for (const rp of repelPositions) {
+      const rdx = word.x - rp.x;
+      const rdy = word.y - rp.y;
+      const rdist = Math.sqrt(rdx*rdx + rdy*rdy);
+      const REPEL_RANGE = 60;
+      if (rdist < REPEL_RANGE && rdist > 0) {
+        const rf = Math.max(0, 1 - rdist/REPEL_RANGE);
+        word.vx += (rdx/rdist) * rf * rf * 0.96;
+        word.vy += (rdy/rdist) * rf * rf * 0.96;
+      }
+    }
+
+    word.vx *= DAMPING;
+    word.vy *= DAMPING;
+    word.x += word.vx;
+    word.y += word.vy;
+
+    const distFromHome = Math.sqrt((word.x-word.homeX)**2 + (word.y-word.homeY)**2);
+    const displaced = Math.min(1, distFromHome / 40);
+    bctx.globalAlpha = isDark ? 0.6 + displaced * 0.4 : 0.75 + displaced * 0.2;
+    bctx.fillText(word.text, word.x, word.y);
+  }
+  bctx.globalAlpha = 1;
+}
+
+// ── ANIMATION LOOP ──
+function loop() {
+  requestAnimationFrame(loop);
+  const raw = getAmplitude();
+  smoothAmp = smoothAmp + (raw - smoothAmp) * 0.12;
+  updateWords(smoothAmp);
+}
+
+window.addEventListener('load', () => {
+  const ready = () => { setupBioCanvas(); loop(); };
+  document.fonts && document.fonts.ready ? document.fonts.ready.then(ready) : setTimeout(ready, 400);
+});
+window.addEventListener('resize', () => { setupBioCanvas(); });
+
+// ── DRAG ──
+const DROP_RADIUS=isMobile?70:86;
+let dragging=null,dragOffX=0,dragOffY=0,snapLeft=0,snapTop=0,activeIcon=null,longPressTimer=null;
+const iconHomes={};
+
+function dzCenter(){const r=document.getElementById('drop-zone').getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2};}
+function dist(x1,y1,x2,y2){return Math.hypot(x2-x1,y2-y1);}
+function iconCenter(icon){const r=icon.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2};}
+
+function startDrag(icon,cx,cy) {
+  if(icon.classList.contains('in-zone')) return;
+  clearTimeout(longPressTimer); icon.classList.remove('press-peek');
+  dragging=icon; if(!isMobile&&cursor) cursor.classList.add('dragging');
+  icon.classList.add('dragging-now');
+  const r=icon.getBoundingClientRect(); snapLeft=r.left; snapTop=r.top;
+  iconHomes[icon.id]={left:r.left,top:r.top};
+  dragOffX=cx-r.left; dragOffY=cy-r.top;
+  icon.style.cssText=`position:fixed!important;left:${r.left}px!important;top:${r.top}px!important;right:auto!important;bottom:auto!important;transition:none!important;z-index:100!important;`;
+}
+
+function moveDrag(cx,cy) {
+  if(!dragging) return;
+  dragging.style.left=(cx-dragOffX)+'px';
+  dragging.style.top=(cy-dragOffY)+'px';
+  const ic=iconCenter(dragging),c=dzCenter(),dz=document.getElementById('drop-zone');
+  if(dist(ic.x,ic.y,c.x,c.y)<DROP_RADIUS){dz.classList.add('ready');dz.classList.remove('active');}
+  else{dz.classList.remove('ready');dz.classList.add('active');}
+  const isTopIcon = dragging.id === 'icon-writing' || dragging.id === 'icon-doux';
+  magnetPower = isTopIcon ? 1.8 : 1.0;
+  magnetPos = { x: ic.x, y: ic.y };
+}
+
+function endDrag(cx,cy) {
+  if(!dragging) return;
+  if(!isMobile&&cursor) cursor.classList.remove('dragging');
+  dragging.classList.remove('dragging-now');
+  document.getElementById('drop-zone').classList.remove('active','ready');
+  const ic=iconCenter(dragging),c=dzCenter(),hit=dist(ic.x,ic.y,c.x,c.y)<DROP_RADIUS;
+  const icon=dragging; dragging=null;
+  magnetPos=null; magnetPower=1.0;
+  if(hit){lockInZone(icon);}else{snapBackIcon(icon,null);}
+}
+
+function lockInZone(icon) {
+  activeIcon=icon;
+  const c=dzCenter(),iw=icon.offsetWidth,ih=icon.offsetHeight;
+  icon.style.cssText=`position:fixed!important;left:${c.x-iw/2}px!important;top:${c.y-ih/2}px!important;right:auto!important;bottom:auto!important;z-index:6!important;transition:left .35s cubic-bezier(0.34,1.56,0.64,1),top .35s cubic-bezier(0.34,1.56,0.64,1)!important;pointer-events:none!important;`;
+  icon.classList.add('in-zone');
+  document.getElementById('zone-label').style.opacity='0';
+  document.getElementById('drop-zone').classList.add('locked');
+  if(navigator.vibrate) navigator.vibrate(12);
+  setTimeout(()=>openOverlay(icon.dataset.target),300);
+}
+function releaseFromZone(icon) {
+  if(!icon) return;
+  icon.classList.remove('in-zone');
+  document.getElementById('zone-label').style.opacity='1';
+  document.getElementById('drop-zone').classList.remove('locked');
+  const home=iconHomes[icon.id];
+  if(home){snapLeft=home.left;snapTop=home.top;}
+  snapBackIcon(icon,null); activeIcon=null;
+}
+function snapBackIcon(icon,cb) {
+  icon.style.cssText=`position:fixed!important;left:${snapLeft}px!important;top:${snapTop}px!important;right:auto!important;bottom:auto!important;transition:left .55s cubic-bezier(0.34,1.56,0.64,1),top .55s cubic-bezier(0.34,1.56,0.64,1)!important;z-index:5!important;`;
+  setTimeout(()=>{icon.style.cssText='';if(cb)cb();},580);
+}
+
+document.querySelectorAll('.icon').forEach(icon=>{
+  icon.addEventListener('mousedown',e=>{e.preventDefault();startDrag(icon,e.clientX,e.clientY);});
+  icon.addEventListener('touchstart',e=>{
+    const t=e.touches[0];
+    longPressTimer=setTimeout(()=>{icon.classList.add('press-peek');if(navigator.vibrate)navigator.vibrate([6,30,6]);setTimeout(()=>icon.classList.remove('press-peek'),600);},400);
+    startDrag(icon,t.clientX,t.clientY);
+  },{passive:true});
+  icon.addEventListener('touchend',e=>{
+    clearTimeout(longPressTimer);
+    const t=e.changedTouches[0];
+    const moved=Math.hypot(t.clientX-snapLeft-icon.offsetWidth/2,t.clientY-snapTop-icon.offsetHeight/2);
+    if(isMobile&&moved<10&&dragging){
+      dragging.classList.remove('dragging-now');dragging.style.cssText='';
+      document.getElementById('drop-zone').classList.remove('active','ready');
+      const ti=dragging;dragging=null;magnetPos=null;magnetPower=1.0;
+      if(navigator.vibrate)navigator.vibrate(8);
+      lockInZone(ti);return;
+    }
+    endDrag(t.clientX,t.clientY);
+  });
+});
+document.addEventListener('mousemove',e=>moveDrag(e.clientX,e.clientY),{passive:true});
+document.addEventListener('mouseup',e=>endDrag(e.clientX,e.clientY));
+document.addEventListener('touchmove',e=>{clearTimeout(longPressTimer);moveDrag(e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
+
+function openOverlay(id){const ov=document.getElementById(id);ov.classList.add('open');bindHover(ov);}
+function closeOverlay(id){document.getElementById(id).classList.remove('open');if(activeIcon&&activeIcon.dataset.target===id)releaseFromZone(activeIcon);}
+document.querySelectorAll('.overlay').forEach(ov=>{ov.addEventListener('click',e=>{if(e.target===ov)closeOverlay(ov.id);});});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay.open').forEach(o=>closeOverlay(o.id));});
+function handleContact(btn){btn.textContent='sent ✓';btn.style.background='var(--contact-stroke)';setTimeout(()=>{btn.textContent='send →';btn.style.background='';},3000);}
+</script>
+</body>
+</html>
