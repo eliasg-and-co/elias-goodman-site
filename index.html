@@ -17,6 +17,7 @@
       --doux-stroke:#3d7a5a;   --doux-bg:#edf5f0;    --doux-border:#b8d9c8;
       --music-stroke:#c4612a;  --music-bg:#f8f0ea;   --music-border:#e8c4a8;
       --contact-stroke:#7c5ca8;--contact-bg:#f3eff8; --contact-border:#d4c4e8;
+      --built-stroke:#5c6670;  --built-bg:#eef0f2;   --built-border:#ccd3d9;
       --serif:'Fraunces',Georgia,serif;
       --mono:'Syne','Arial',sans-serif;
     }
@@ -28,6 +29,7 @@
       --doux-bg:#182820;    --doux-border:#2a4a38;
       --music-bg:#2a1810;   --music-border:#4a2a18;
       --contact-bg:#201828; --contact-border:#3a2848;
+      --built-bg:#1a1d20;    --built-border:#31383f;
     }
     html,body { width:100%; height:100%; overflow:hidden; background:var(--bg); font-family:var(--serif); color:var(--ink); transition:background .6s ease,color .6s ease; }
     body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:0; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E"); }
@@ -64,10 +66,11 @@
     .icon { position:absolute; width:92px; display:flex; flex-direction:column; align-items:center; gap:9px; user-select:none; z-index:5; opacity:0; animation:fi .5s ease .35s forwards; }
     @media (hover:hover) and (pointer:fine) { .icon { cursor:none; } }
     @media (hover:none) { .icon { cursor:pointer; } }
-    #icon-writing  { top:28%; left:14%; }
-    #icon-doux     { top:28%; right:14%; }
-    #icon-music    { top:62%; left:14%; }
-    #icon-contact  { top:62%; right:14%; }
+    #icon-built    { top:11%; left:calc(50% - 46px); }
+    #icon-writing  { top:31%; left:11%; }
+    #icon-doux     { top:31%; right:11%; }
+    #icon-music    { top:61%; left:19%; }
+    #icon-contact  { top:61%; right:19%; }
     .icon.in-zone  { position:fixed!important; z-index:6!important; pointer-events:none; }
     .icon-circle { width:72px; height:72px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:1.5px solid var(--ink-faint); background:var(--bg2); transition:transform .2s cubic-bezier(0.34,1.56,0.64,1),background .2s,border-color .2s; }
     .icon-circle svg { width:26px; height:26px; stroke:var(--ink-light); fill:none; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; transition:stroke .2s; }
@@ -84,6 +87,9 @@
     #icon-contact:hover .icon-circle,#icon-contact.dragging-now .icon-circle { background:var(--contact-bg);border-color:var(--contact-border);transform:scale(1.08) rotate(2deg); }
     #icon-contact:hover .icon-circle svg,#icon-contact.dragging-now .icon-circle svg { stroke:var(--contact-stroke); }
     #icon-contact:hover .icon-label { color:var(--contact-stroke); }
+    #icon-built:hover .icon-circle,#icon-built.dragging-now .icon-circle { background:var(--built-bg);border-color:var(--built-border);transform:scale(1.08) rotate(-2deg); }
+    #icon-built:hover .icon-circle svg,#icon-built.dragging-now .icon-circle svg { stroke:var(--built-stroke); }
+    #icon-built:hover .icon-label { color:var(--built-stroke); }
     .icon.dragging-now { z-index:8; }
 
     #bio-canvas-wrap { position:fixed; inset:0; z-index:4; opacity:0; animation:fi .5s ease .5s forwards; pointer-events:none; overflow:visible; }
@@ -106,6 +112,8 @@
     .essay-title { font-family:var(--serif); font-size:16px; font-style:italic; font-weight:300; color:var(--ink-mid); transition:color .15s; letter-spacing:-.01em; }
     .essay-item:hover .essay-title { color:var(--writing-stroke); }
     .essay-date { font-family:var(--mono); font-size:8px; font-weight:400; color:var(--ink-light); letter-spacing:.1em; }
+    .built-item:hover .essay-title { color:var(--built-stroke); }
+    .built-desc { display:block; font-family:var(--mono); font-size:9px; font-weight:400; line-height:1.7; color:var(--ink-light); margin-top:4px; }
     .doux-link { font-family:var(--mono); font-size:9px; font-weight:400; color:var(--doux-stroke); text-decoration:none; display:block; margin-top:14px; }
     .doux-desc-text { font-family:var(--mono); font-size:9px; font-weight:400; line-height:1.9; color:var(--ink-mid); margin-top:8px; }
     .music-track-item { display:grid; grid-template-columns:18px 1fr auto; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--ink-faint); }
@@ -144,11 +152,12 @@
     @media (hover:none) {
       #name-block { left:24px; top:28px; }
       #mute-btn { top:28px; }
-      #icon-writing  { top:17%; left:8%; }
-      #icon-doux     { top:17%; right:8%; }
-      #icon-music    { top:53%; left:8%; }
-      #icon-contact  { top:53%; right:8%; }
-      #drop-zone { width:155px; height:155px; top:40%; }
+      #icon-built    { top:19%; left:calc(50% - 46px); }
+      #icon-writing  { top:30%; left:3%; }
+      #icon-doux     { top:30%; right:3%; }
+      #icon-music    { top:54%; left:8%; }
+      #icon-contact  { top:54%; right:8%; }
+      #drop-zone { width:130px; height:130px; top:41%; }
     }
   </style>
 </head>
@@ -202,6 +211,10 @@
     <div class="icon-circle"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
     <div class="icon-label">eegee</div>
   </div>
+  <div class="icon" id="icon-built" data-target="overlay-built">
+    <div class="icon-circle"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+    <div class="icon-label">built</div>
+  </div>
   <div class="icon" id="icon-contact" data-target="overlay-contact">
     <div class="icon-circle"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
     <div class="icon-label">contact</div>
@@ -239,6 +252,18 @@
     <div class="overlay-header"><div class="overlay-title">eegee</div><button class="overlay-close" onclick="closeOverlay('overlay-music')">close ×</button></div>
     <div class="overlay-body">
       <iframe width="100%" height="166" scrolling="no" frameborder="no" allow="autoplay; encrypted-media" src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/eliasgoodman/rod-hype-vip-137bpm&color=%23c4612a&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=true"></iframe>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="overlay-built">
+  <div class="overlay-card">
+    <div class="overlay-header"><div class="overlay-title">built</div><button class="overlay-close" onclick="closeOverlay('overlay-built')">close ×</button></div>
+    <div class="overlay-body">
+      <div class="essay-item built-item"><span><span class="essay-title">doux Live</span><span class="built-desc">Max for Live device mapping arbitrary data streams to session parameters</span></span><span class="essay-date">2026</span></div>
+      <div class="essay-item built-item"><span><span class="essay-title">doux · field</span><span class="built-desc">phone-native capture; ambient audio routed through live local conditions</span></span><span class="essay-date">2026</span></div>
+      <div class="essay-item built-item"><span><span class="essay-title">World Cup engine</span><span class="built-desc">ESPN API to serverless proxy to Tone.js, running live during matches</span></span><span class="essay-date">2026</span></div>
+      <div class="essay-item built-item"><span><span class="essay-title">NBA pipeline</span><span class="built-desc">Python to OSC to Ableton, ran through the Knicks playoff run</span></span><span class="essay-date">2025</span></div>
+      <div class="essay-item built-item"><span><span class="essay-title">Scout</span><span class="built-desc">desktop companion capturing Ableton session state, converting patches to Tone.js</span></span><span class="essay-date">—</span></div>
     </div>
   </div>
 </div>
