@@ -132,6 +132,7 @@
 
     #hero-below { position:fixed; left:48px; right:48px; bottom:26px; z-index:5; display:flex; flex-direction:column; gap:10px; opacity:0; animation:fi .5s ease .65s forwards; pointer-events:none; }
     #hero-below > * { pointer-events:auto; }
+    #right-now { font-family:var(--mono); font-size:9px; font-weight:400; letter-spacing:.1em; color:var(--ink-light); min-height:12px; }
     #two-takes { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
     .take { display:flex; flex-direction:column; gap:3px; }
     .take-head { display:flex; align-items:baseline; gap:10px; }
@@ -170,7 +171,7 @@
       #icon-music    { top:54%; left:8%; }
       #icon-contact  { top:54%; right:8%; }
       #drop-zone { width:130px; height:130px; top:41%; }
-      #hero-below { left:24px; right:24px; bottom:16px; gap:7px; }
+      #hero-below { left:24px; right:24px; bottom:9px; gap:5px; }
       #two-takes { gap:14px; }
     }
   </style>
@@ -242,6 +243,7 @@
      placeholders. Swap in the real rendered files and the data snapshot
      that produced each one. -->
 <div id="hero-below">
+  <div id="right-now"></div>
   <div id="two-takes">
     <div class="take">
       <div class="take-head"><span class="take-label">take 01</span><button class="take-play" onclick="playTake(this)">[ play ]</button></div>
@@ -591,6 +593,32 @@ function openOverlay(id){const ov=document.getElementById(id);ov.classList.add('
 function closeOverlay(id){document.getElementById(id).classList.remove('open');if(activeIcon&&activeIcon.dataset.target===id)releaseFromZone(activeIcon);}
 document.querySelectorAll('.overlay').forEach(ov=>{ov.addEventListener('click',e=>{if(e.target===ov)closeOverlay(ov.id);});});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay.open').forEach(o=>closeOverlay(o.id));});
+// ── RIGHT NOW ──
+// Weather is live: Open-Meteo, keyless and CORS-open, same endpoint/units
+// doux-v3's fetchWeather() uses, plus wind_direction_10m for the compass.
+// TODO(vix): doux-v3 reads VIX from /api/fred?series=vix. That route's CORS
+// allowlist in doux-v3/api/_guard.js is doux.studio + its own previews only,
+// so it is not callable from this origin and the number below is HARDCODED.
+// Either add this host to ALLOWED_STATIC_ORIGINS there, or stand up an
+// equivalent proxy on this project, then read it here.
+const VIX_PLACEHOLDER = '18.4';
+const COMPASS = ['N','NE','E','SE','S','SW','W','NW'];
+
+async function fetchRightNow(){
+  const el = document.getElementById('right-now');
+  if(!el) return;
+  try {
+    const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=40.7128&longitude=-74.0060&current=temperature_2m,wind_speed_10m,wind_direction_10m&temperature_unit=fahrenheit&wind_speed_unit=mph');
+    if(!r.ok) throw new Error('weather '+r.status);
+    const c = (await r.json()).current;
+    const dir = COMPASS[Math.round(c.wind_direction_10m/45)%8];
+    el.textContent = 'right now: '+Math.round(c.temperature_2m)+'°F · wind '+Math.round(c.wind_speed_10m)+'mph '+dir+' · VIX '+VIX_PLACEHOLDER;
+  } catch(e) {
+    el.textContent=''; // stays blank rather than showing a failed or loading state
+  }
+}
+fetchRightNow(); setInterval(fetchRightNow, 60000);
+
 // ── TWO TAKES (stub) ──
 // TODO: placeholder transport for the stub players. Real takes get wired here.
 function playTake(btn){
