@@ -69,8 +69,8 @@
     #icon-built    { top:11%; left:calc(50% - 46px); }
     #icon-writing  { top:31%; left:11%; }
     #icon-doux     { top:31%; right:11%; }
-    #icon-music    { top:61%; left:19%; }
-    #icon-contact  { top:61%; right:19%; }
+    #icon-music    { top:57%; left:19%; }
+    #icon-contact  { top:57%; right:19%; }
     .icon.in-zone  { position:fixed!important; z-index:6!important; pointer-events:none; }
     .icon-circle { width:72px; height:72px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:1.5px solid var(--ink-faint); background:var(--bg2); transition:transform .2s cubic-bezier(0.34,1.56,0.64,1),background .2s,border-color .2s; }
     .icon-circle svg { width:26px; height:26px; stroke:var(--ink-light); fill:none; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; transition:stroke .2s; }
@@ -173,6 +173,17 @@
       #icon-contact  { top:54%; right:8%; }
       #drop-zone { width:130px; height:130px; top:41%; }
       #hero-below { left:24px; right:24px; bottom:9px; gap:5px; }
+    }
+    /* Short phones: the ring is positioned in %, but each icon block is a
+       fixed 92px tall, so the two stop scaling together and BUILT lands on
+       the drop zone. Tighten the ring and shrink the zone to match. */
+    @media (hover:none) and (max-height:720px) {
+      #icon-built    { top:19%; }
+      #icon-writing  { top:34%; }
+      #icon-doux     { top:34%; }
+      #icon-music    { top:55%; }
+      #icon-contact  { top:55%; }
+      #drop-zone { width:104px; height:104px; top:45.5%; }
       #two-takes { gap:14px; }
     }
   </style>
@@ -181,8 +192,8 @@
 <div class="sr-only">
   <h1>Elias Goodman — Brooklyn, NY</h1>
   <p>doux is a music format that can't be played twice.</p>
-  <p>Finished stems, modulated live by what's happening around you. A blizzard over Brooklyn, the L Train delayed, a match in progress. No master to license, no yield for a catalog fund, nothing to train a model on.</p>
-  <p>I'm Elias Goodman. I produce as eegee. Five years in financial communications watching songs get repriced as assets. doux is the counterargument.</p>
+  <p>Finished stems, modulated live by whatever's actually happening around you. A blizzard over Brooklyn, the delayed L Train making you late for work, a match in progress. There's no canonical version. No master to license, nothing for a catalog fund to price as yield, nothing for a model to train on. What you just heard is gone.</p>
+  <p>I'm Elias Goodman. I produce as eegee and spent five years in financial communications watching songs get repriced as assets. doux is the counterargument.</p>
 </div>
 <div id="cursor"></div>
 <div id="stage">
@@ -386,14 +397,30 @@ function getAmplitude() {
 }
 
 // ── MAGNETIC BIO ──
-const BIO_TEXT = "doux is a music format that can't be played twice. Finished stems, modulated live by what's happening around you. A blizzard over Brooklyn, the L Train delayed, a match in progress. No master to license, no yield for a catalog fund, nothing to train a model on. I'm Elias Goodman. I produce as eegee. Five years in financial communications watching songs get repriced as assets. doux is the counterargument.";
+// The hero as sentences. The two marked optional restate the thesis in the
+// first paragraph, so shedding them on a cramped viewport costs no claim --
+// they are the last thing given up before the type would go below FONT_MIN.
+const BIO_PARAGRAPHS = [
+  [ {t:"doux is a music format that can't be played twice."} ],
+  [ {t:"Finished stems, modulated live by whatever's actually happening around you."},
+    {t:"A blizzard over Brooklyn, the delayed L Train making you late for work, a match in progress."},
+    {t:"There's no canonical version.", optional:true},
+    {t:"No master to license, nothing for a catalog fund to price as yield, nothing for a model to train on."},
+    {t:"What you just heard is gone.", optional:true} ],
+  [ {t:"I'm Elias Goodman. I produce as eegee and spent five years in financial communications watching songs get repriced as assets."},
+    {t:"doux is the counterargument."} ]
+];
 
 const bioCanvas = document.getElementById('bio-canvas');
 const bctx = bioCanvas.getContext('2d');
 
-const FONT_SIZE = 14.5;
-const LINE_H = FONT_SIZE * 1.72;
-const FONT = `italic 300 ${FONT_SIZE}px "Fraunces", Georgia, serif`;
+// The hero is set as large as fits between its top anchor and whatever sits
+// below it, down to a readability floor. A short viewport gets smaller type
+// instead of a clipped last line.
+const FONT_MAX = 14.5, FONT_MIN = 11;
+let FONT_SIZE = FONT_MAX;
+let LINE_H = FONT_SIZE * 1.72;
+let FONT = `italic 300 ${FONT_SIZE}px "Fraunces", Georgia, serif`;
 
 let canvasW = 0, canvasH = 0;
 let words = [];
@@ -412,23 +439,70 @@ function setupBioCanvas() {
   layoutWords();
 }
 
-function layoutWords() {
+// Lay the paragraphs out at one candidate size. Returns the words and the
+// baseline of the last line so the caller can test the fit.
+function buildWords(size, margin, maxW, homeTop, withOptional) {
+  FONT_SIZE = size;
+  LINE_H = size * 1.72;
+  FONT = `italic 300 ${size}px "Fraunces", Georgia, serif`;
   bctx.font = FONT;
-  const tokens = BIO_TEXT.split(' ');
-  words = [];
+  const out = [];
+  let y = homeTop + size;
+  for (let p = 0; p < BIO_PARAGRAPHS.length; p++) {
+    if (p > 0) y += LINE_H * 1.4;   // next line, plus a gap between beats
+    let x = margin;
+    const para = BIO_PARAGRAPHS[p].filter(sn => withOptional || !sn.optional).map(sn => sn.t).join(' ');
+    for (const word of para.split(' ')) {
+      const ww = bctx.measureText(word + ' ').width;
+      if (x + ww > margin + maxW && x > margin) { x = margin; y += LINE_H; }
+      out.push({ text: word, homeX: x, homeY: y, x: x, y: y, vx: 0, vy: 0 });
+      x += ww;
+    }
+  }
+  return { out: out, bottom: y };
+}
+
+// Largest size at or below FONT_MAX whose last baseline clears whatever is
+// pinned below the hero. Reports fits:false if it bottoms out at FONT_MIN.
+function fitHero(margin, maxW, homeTop, withOptional) {
+  const below = document.getElementById('hero-below');
+  const reserve = below ? canvasH - below.getBoundingClientRect().top + 12 : 40;
+  const limit = canvasH - reserve;
+  for (let size = FONT_MAX; ; size -= 0.25) {
+    const built = buildWords(size, margin, maxW, homeTop, withOptional);
+    if (built.bottom <= limit) { built.fits = true; return built; }
+    if (size <= FONT_MIN) { built.fits = false; return built; }
+  }
+}
+
+function layoutWords() {
   const margin = isMobile ? 24 : 48;
   const maxW = canvasW - margin * 2;
-  const homeTop = canvasH * (isMobile ? 0.70 : 0.78);
-  let x = margin, lineIdx = 0;
+  // Anchor the hero below whatever the icon ring actually occupies, rather
+  // than at a fixed fraction -- the ring is positioned in % but each icon is
+  // a fixed 92px, so on short viewports a fraction alone lands on the labels.
+  const lower = document.getElementById('icon-music');
+  const iconsBottom = lower ? lower.getBoundingClientRect().bottom : 0;
+  const homeTop = Math.max(canvasH * (isMobile ? 0.67 : 0.73), iconsBottom + (isMobile ? 16 : 24));
+  const takes = document.getElementById('two-takes');
 
-  for (let i = 0; i < tokens.length; i++) {
-    const w = tokens[i];
-    const ww = bctx.measureText(w + ' ').width;
-    if (x + ww > margin + maxW && x > margin) { x = margin; lineIdx++; }
-    const hx = x, hy = homeTop + lineIdx * LINE_H + FONT_SIZE;
-    words.push({ text: w, homeX: hx, homeY: hy, x: hx, y: hy, vx: 0, vy: 0 });
-    x += ww;
+  // Try the whole composition first. The placeholder takes module is the
+  // lowest-value thing on the page, so it is what yields when the hero
+  // cannot reach its readability floor with it present.
+  // Degradation ladder, least-valuable thing first. The two optional
+  // sentences only restate the thesis, so they go before the takes module,
+  // which is the page's one demonstration of the claim the hero makes.
+  if (takes) takes.style.display = '';
+  let built = fitHero(margin, maxW, homeTop, true);
+  if (!built.fits) built = fitHero(margin, maxW, homeTop, false);
+  if (!built.fits && takes) {
+    takes.style.display = 'none';
+    built = fitHero(margin, maxW, homeTop, false);
   }
+  // Last resort -- a landscape phone has no room for a hero at any legible
+  // size. Draw none rather than spill it off the bottom; the same copy is
+  // still in the .sr-only block for screen readers and crawlers.
+  words = built.fits ? built.out : [];
 }
 
 let magnetPos = null;
