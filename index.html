@@ -322,30 +322,180 @@ function checkSunTheme() {
 checkSunTheme(); setInterval(checkSunTheme,300000);
 
 // ── AUDIO ──
-let audioCtx=null,analyser=null,source=null,audioBuffer=null,audioPlaying=false,gainNode=null,smoothAmp=0;
-async function initAudio() {
+// One AudioContext, one master chain: everything -> analyser -> gainNode -> out.
+// [ play ] is the only gate; nothing sounds before it is pressed.
+let audioCtx=null,analyser=null,gainNode=null,audioPlaying=false,smoothAmp=0,transportStarted=false;
+let loopBuffer=null;                      // ambient bed, used only when no stems load
+
+// ── STEMS ──
+// The five icons are a stem player. Drop five loops into /stems/, one per
+// icon -- same length, same tempo, same start point. They start on one clock
+// and loop together. Missing files are skipped; if none load, [ play ] falls
+// back to loop.mp3 exactly as before.
+//
+// Each stem runs through one effect. Dragging its icon toward the drop zone
+// turns the effect up (home = dry, in the zone = fully wet) and its x position
+// pans it. fx: reverb | delay | filter | tremolo | drive. Options per fx:
+//   reverb  seconds, decay      delay  time, feedback      filter  low, q
+//   tremolo rate                drive  amount              any     gain
+const STEMS = {
+  writing: { file:'stems/writing.mp3', fx:'delay',   time:0.375, feedback:0.45 },
+  doux:    { file:'stems/doux.mp3',    fx:'reverb',  seconds:2.6, decay:3 },
+  music:   { file:'stems/eegee.mp3',   fx:'filter',  low:220 },
+  built:   { file:'stems/built.mp3',   fx:'drive',   amount:30 },
+  contact: { file:'stems/contact.mp3', fx:'tremolo', rate:5.5 },
+};
+const stems = {};                         // id -> {buffer, fx, pan, out, source, lastT, lastPan}
+
+// ── SFX ──
+// One-shots fired when a dragged icon disturbs the hero text. Drop short files
+// into /sfx/ and list them here; one is picked at random per hit, with a little
+// rate jitter. Until any load, a soft synthesized chime stands in so the
+// mechanic is audible.
+const SFX_FILES = ['sfx/01.mp3','sfx/02.mp3','sfx/03.mp3','sfx/04.mp3'];
+const sfxBuffers = [];
+
+async function loadBuffer(url){
+  const r=await fetch(url); if(!r.ok) throw new Error(url+' '+r.status);
+  return audioCtx.decodeAudioData(await r.arrayBuffer());
+}
+function makeImpulse(seconds, decay){
+  const rate=audioCtx.sampleRate, len=Math.floor(rate*seconds), buf=audioCtx.createBuffer(2,len,rate);
+  for(let c=0;c<2;c++){const d=buf.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,decay);}
+  return buf;
+}
+function makeDriveCurve(k){
+  const n=1024, c=new Float32Array(n);
+  for(let i=0;i<n;i++){const x=i*2/n-1;c[i]=(1+k)*x/(1+k*Math.abs(x));}
+  return c;
+}
+// Every effect exposes {input, output, set(t)} with t in 0..1.
+function makeFx(name, o){
+  const A=audioCtx, input=A.createGain(), output=A.createGain();
+  const ramp=(p,v)=>p.setTargetAtTime(v,A.currentTime,0.05);
+  if(name==='reverb'){
+    const dry=A.createGain(), wet=A.createGain(), conv=A.createConvolver();
+    conv.buffer=makeImpulse(o.seconds||2.6,o.decay||3); wet.gain.value=0;
+    input.connect(dry); dry.connect(output); input.connect(conv); conv.connect(wet); wet.connect(output);
+    return {input,output,set:t=>{ramp(dry.gain,1-0.6*t);ramp(wet.gain,t);}};
+  }
+  if(name==='delay'){
+    const dry=A.createGain(), wet=A.createGain(), del=A.createDelay(2), fb=A.createGain();
+    del.delayTime.value=o.time||0.375; fb.gain.value=o.feedback||0.45; wet.gain.value=0;
+    input.connect(dry); dry.connect(output); input.connect(del); del.connect(fb); fb.connect(del); del.connect(wet); wet.connect(output);
+    return {input,output,set:t=>ramp(wet.gain,t)};
+  }
+  if(name==='filter'){
+    const f=A.createBiquadFilter(), lo=o.low||220, hi=18000;
+    f.type='lowpass'; f.Q.value=o.q||1.2; f.frequency.value=hi;
+    input.connect(f); f.connect(output);
+    return {input,output,set:t=>ramp(f.frequency,hi*Math.pow(lo/hi,t))};
+  }
+  if(name==='tremolo'){
+    const g=A.createGain(), lfo=A.createOscillator(), depth=A.createGain();
+    lfo.frequency.value=o.rate||5.5; depth.gain.value=0;
+    lfo.connect(depth); depth.connect(g.gain); lfo.start();
+    input.connect(g); g.connect(output);
+    return {input,output,set:t=>{ramp(g.gain,1-0.5*t);ramp(depth.gain,0.5*t);}};
+  }
+  if(name==='drive'){
+    const dry=A.createGain(), wet=A.createGain(), ws=A.createWaveShaper(), trim=A.createGain();
+    ws.curve=makeDriveCurve(o.amount||30); ws.oversample='2x'; trim.gain.value=0.5; wet.gain.value=0;
+    input.connect(dry); dry.connect(output); input.connect(ws); ws.connect(trim); trim.connect(wet); wet.connect(output);
+    return {input,output,set:t=>{ramp(dry.gain,1-t);ramp(wet.gain,t);}};
+  }
+  input.connect(output); return {input,output,set:()=>{}};
+}
+async function loadStems(){
+  await Promise.all(Object.entries(STEMS).map(async([id,cfg])=>{
+    try{
+      const buffer=await loadBuffer(cfg.file);
+      const fx=makeFx(cfg.fx,cfg), pan=audioCtx.createStereoPanner(), out=audioCtx.createGain();
+      out.gain.value=cfg.gain??1;
+      fx.output.connect(pan); pan.connect(out); out.connect(analyser);
+      stems[id]={buffer,fx,pan,out,source:null,lastT:-1,lastPan:-9};
+    }catch(e){ /* not dropped in yet */ }
+  }));
+}
+async function loadSfx(){
+  await Promise.all(SFX_FILES.map(async f=>{ try{ sfxBuffers.push(await loadBuffer(f)); }catch(e){} }));
+}
+async function initAudio(){
   if(audioCtx) return;
   audioCtx=new(window.AudioContext||window.webkitAudioContext)();
   analyser=audioCtx.createAnalyser(); analyser.fftSize=256; analyser.smoothingTimeConstant=0.85;
   gainNode=audioCtx.createGain(); gainNode.gain.value=0.7;
   analyser.connect(gainNode); gainNode.connect(audioCtx.destination);
-  try { const r=await fetch('./loop.mp3'); audioBuffer=await audioCtx.decodeAudioData(await r.arrayBuffer()); } catch(e){}
+  await Promise.all([loadStems(), loadSfx(), loadBuffer('./loop.mp3').then(b=>{loopBuffer=b;}).catch(()=>{})]);
 }
-function playAudio() {
-  if(!audioBuffer||!audioCtx) return;
-  source=audioCtx.createBufferSource(); source.buffer=audioBuffer; source.loop=true;
-  source.connect(analyser); source.start(0); audioPlaying=true;
+// All stems start on the same timestamp so they stay phase-locked.
+function startTransport(){
+  const t0=audioCtx.currentTime+0.08, ids=Object.keys(stems);
+  if(ids.length){
+    for(const id of ids){
+      const s=stems[id], src=audioCtx.createBufferSource();
+      src.buffer=s.buffer; src.loop=true; src.connect(s.fx.input); src.start(t0); s.source=src;
+    }
+  } else if(loopBuffer){
+    const src=audioCtx.createBufferSource(); src.buffer=loopBuffer; src.loop=true; src.connect(analyser); src.start(t0);
+  }
+  transportStarted=true;
 }
-async function toggleAudio() {
+async function toggleAudio(){
   await initAudio(); if(!audioCtx) return;
   const btn=document.getElementById('mute-btn');
-  if(!audioPlaying) {
-    if(source){await audioCtx.resume();audioPlaying=true;}
-    else{if(audioCtx.state==='suspended')await audioCtx.resume();playAudio();}
-    btn.textContent='[ mute ]'; btn.classList.add('playing');
+  if(!audioPlaying){
+    if(audioCtx.state==='suspended') await audioCtx.resume();
+    if(!transportStarted) startTransport();
+    audioPlaying=true; btn.textContent='[ mute ]'; btn.classList.add('playing');
   } else {
     await audioCtx.suspend(); audioPlaying=false;
     btn.textContent='[ play ]'; btn.classList.remove('playing');
+  }
+}
+
+// ── MODULATION ──
+// Each frame while playing: an icon's distance from the ring centre sets its
+// stem's effect amount; its x position sets the pan. Reads the icon's live
+// rect, so a drag, the snap-back transition and the locked-in-zone state all
+// modulate for free.
+let ringR=0;
+function measureRing(){
+  const b=document.getElementById('icon-built'); if(!b) return;
+  const r=b.getBoundingClientRect(), c=dzCenter();
+  ringR=Math.hypot(r.left+46-c.x, r.top+36-c.y)||1;
+}
+function modulateStems(){
+  if(!audioPlaying||!transportStarted||!ringR) return;
+  const c=dzCenter();
+  for(const id in stems){
+    const icon=document.getElementById('icon-'+id); if(!icon) continue;
+    const r=icon.getBoundingClientRect(), x=r.left+46, y=r.top+36, s=stems[id];
+    const t=Math.max(0,Math.min(1,1-Math.hypot(x-c.x,y-c.y)/ringR));
+    const pan=Math.max(-1,Math.min(1,0.8*(x-c.x)/(canvasW/2)));
+    if(Math.abs(t-s.lastT)>0.003){s.fx.set(t);s.lastT=t;}
+    if(Math.abs(pan-s.lastPan)>0.003){s.pan.pan.setTargetAtTime(pan,audioCtx.currentTime,0.05);s.lastPan=pan;}
+  }
+}
+let lastSfxAt=0;
+function fireSfx(strength){
+  if(!audioCtx||!audioPlaying) return;
+  const now=performance.now(); if(now-lastSfxAt<90) return; lastSfxAt=now;
+  const t=audioCtx.currentTime, g=audioCtx.createGain(); g.connect(analyser);
+  if(sfxBuffers.length){
+    g.gain.value=0.25+0.45*strength;
+    const src=audioCtx.createBufferSource();
+    src.buffer=sfxBuffers[Math.floor(Math.random()*sfxBuffers.length)];
+    src.playbackRate.value=0.92+Math.random()*0.16;
+    src.connect(g); src.start(t);
+  } else {
+    // stand-in until files exist: a short sine on a pentatonic step
+    const o=audioCtx.createOscillator(), steps=[0,2,4,7,9,12];
+    o.frequency.value=660*Math.pow(2,steps[Math.floor(Math.random()*steps.length)]/12);
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(0.06+0.1*strength,t+0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+0.7);
+    o.connect(g); o.start(t); o.stop(t+0.72);
   }
 }
 const freqData=new Uint8Array(128);
@@ -404,7 +554,7 @@ function buildWords(size, margin, maxW, homeTop) {
     for (const word of BIO_PARAGRAPHS[p].split(' ')) {
       const ww = bctx.measureText(word + ' ').width;
       if (x + ww > margin + maxW && x > margin) { x = margin; y += LINE_H; }
-      out.push({ text: word, homeX: x, homeY: y, x: x, y: y, vx: 0, vy: 0 });
+      out.push({ text: word, homeX: x, homeY: y, x: x, y: y, vx: 0, vy: 0, hot: false });
       x += ww;
     }
   }
@@ -457,6 +607,9 @@ function updateWords(amp) {
   const SPRING = 0.08;
   const DAMPING = 0.72;
 
+  // A word "fires" once each time an icon knocks it more than 14px from home,
+  // and re-arms once it has settled back under 5px.
+  let hits = 0;
   for (const word of words) {
     if (magnetPos && magnetStrength > 0.01) {
       const dx = magnetPos.x - word.x;
@@ -486,11 +639,14 @@ function updateWords(amp) {
     word.y += word.vy;
 
     const distFromHome = Math.sqrt((word.x-word.homeX)**2 + (word.y-word.homeY)**2);
+    if (!word.hot && distFromHome > 14) { word.hot = true; hits++; }
+    else if (word.hot && distFromHome < 5) { word.hot = false; }
     const displaced = Math.min(1, distFromHome / 40);
     bctx.globalAlpha = isDark ? 0.6 + displaced * 0.4 : 0.75 + displaced * 0.2;
     bctx.fillText(word.text, word.x, word.y);
   }
   bctx.globalAlpha = 1;
+  if (hits && dragging) fireSfx(Math.min(1, hits / 4));
 }
 
 // ── ANIMATION LOOP ──
@@ -499,13 +655,14 @@ function loop() {
   const raw = getAmplitude();
   smoothAmp = smoothAmp + (raw - smoothAmp) * 0.12;
   updateWords(smoothAmp);
+  modulateStems();
 }
 
 window.addEventListener('load', () => {
-  const ready = () => { setupBioCanvas(); loop(); };
+  const ready = () => { setupBioCanvas(); measureRing(); loop(); };
   document.fonts && document.fonts.ready ? document.fonts.ready.then(ready) : setTimeout(ready, 400);
 });
-window.addEventListener('resize', () => { setupBioCanvas(); });
+window.addEventListener('resize', () => { setupBioCanvas(); measureRing(); });
 
 // ── DRAG ──
 const DROP_RADIUS=isMobile?70:86;
