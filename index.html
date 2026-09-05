@@ -42,7 +42,11 @@
     }
     @media (hover:none) { #cursor { display:none!important; } }
 
-    #stage { position:fixed; inset:0; z-index:1; }
+    /* Five icons on a regular pentagon around the drop zone. Circle centres
+       sit exactly --ring-r from (--cx, --cy); the 46px/36px offsets are the
+       circle's centre within the 92px icon block. Pure CSS so the drag
+       code's cssText='' reset always returns an icon to its home. */
+    #stage { position:fixed; inset:0; z-index:1; --cx:50%; --cy:50%; --ring-r:min(30vmin,260px); }
     .corners { position:absolute; inset:0; pointer-events:none; opacity:0.1; }
 
     #name-block { position:absolute; top:36px; left:48px; z-index:2; opacity:0; animation:fi .5s ease .05s forwards; }
@@ -57,7 +61,7 @@
     #mute-btn.playing::before { content:''; position:absolute; top:50%; left:-14px; transform:translateY(-50%); width:6px; height:6px; border-radius:50%; background:var(--music-stroke); animation:pulse 1.8s ease-in-out infinite; }
     @keyframes pulse { 0%,100%{opacity:.3;transform:translateY(-50%) scale(0.8)} 50%{opacity:1;transform:translateY(-50%) scale(1.2)} }
 
-    #drop-zone { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:210px; height:210px; border:1.5px dashed var(--ink-light); border-radius:50%; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:3; transition:border-color .25s,background .25s,transform .25s; opacity:0; animation:fi .5s ease .2s forwards; }
+    #drop-zone { position:absolute; top:var(--cy); left:var(--cx); transform:translate(-50%,-50%); width:210px; height:210px; border:1.5px dashed var(--ink-light); border-radius:50%; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:3; transition:border-color .25s,background .25s,transform .25s; opacity:0; animation:fi .5s ease .2s forwards; }
     #drop-zone.active { border-color:var(--ink-mid); background:color-mix(in srgb,var(--ink-faint) 40%,transparent); }
     #drop-zone.ready  { border-color:var(--ink); border-style:solid; background:color-mix(in srgb,var(--ink-faint) 60%,transparent); transform:translate(-50%,-50%) scale(1.04); }
     #drop-zone.locked { border-color:var(--ink); border-style:solid; background:color-mix(in srgb,var(--ink-faint) 40%,transparent); transform:translate(-50%,-50%); }
@@ -66,11 +70,11 @@
     .icon { position:absolute; width:92px; display:flex; flex-direction:column; align-items:center; gap:9px; user-select:none; z-index:5; opacity:0; animation:fi .5s ease .35s forwards; }
     @media (hover:hover) and (pointer:fine) { .icon { cursor:none; } }
     @media (hover:none) { .icon { cursor:pointer; } }
-    #icon-built    { top:11%; left:calc(50% - 46px); }
-    #icon-writing  { top:31%; left:11%; }
-    #icon-doux     { top:31%; right:11%; }
-    #icon-music    { top:57%; left:19%; }
-    #icon-contact  { top:57%; right:19%; }
+    #icon-built    { left:calc(var(--cx) - 46px);                          top:calc(var(--cy) - var(--ring-r) - 36px); }
+    #icon-doux     { left:calc(var(--cx) + 0.9511*var(--ring-r) - 46px);   top:calc(var(--cy) - 0.3090*var(--ring-r) - 36px); }
+    #icon-contact  { left:calc(var(--cx) + 0.5878*var(--ring-r) - 46px);   top:calc(var(--cy) + 0.8090*var(--ring-r) - 36px); }
+    #icon-music    { left:calc(var(--cx) - 0.5878*var(--ring-r) - 46px);   top:calc(var(--cy) + 0.8090*var(--ring-r) - 36px); }
+    #icon-writing  { left:calc(var(--cx) - 0.9511*var(--ring-r) - 46px);   top:calc(var(--cy) - 0.3090*var(--ring-r) - 36px); }
     .icon.in-zone  { position:fixed!important; z-index:6!important; pointer-events:none; }
     .icon-circle { width:72px; height:72px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:1.5px solid var(--ink-faint); background:var(--bg2); transition:transform .2s cubic-bezier(0.34,1.56,0.64,1),background .2s,border-color .2s; }
     .icon-circle svg { width:26px; height:26px; stroke:var(--ink-light); fill:none; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; transition:stroke .2s; }
@@ -166,25 +170,9 @@
     @media (hover:none) {
       #name-block { left:24px; top:28px; }
       #mute-btn { top:28px; }
-      #icon-built    { top:19%; left:calc(50% - 46px); }
-      #icon-writing  { top:30%; left:3%; }
-      #icon-doux     { top:30%; right:3%; }
-      #icon-music    { top:54%; left:8%; }
-      #icon-contact  { top:54%; right:8%; }
-      #drop-zone { width:130px; height:130px; top:41%; }
+      #stage { --cy:45%; --ring-r:36vmin; }
+      #drop-zone { width:130px; height:130px; }
       #hero-below { left:24px; right:24px; bottom:9px; gap:5px; }
-    }
-    /* Short phones: the ring is positioned in %, but each icon block is a
-       fixed 92px tall, so the two stop scaling together and BUILT lands on
-       the drop zone. Tighten the ring and shrink the zone to match. */
-    @media (hover:none) and (max-height:720px) {
-      #icon-built    { top:19%; }
-      #icon-writing  { top:34%; }
-      #icon-doux     { top:34%; }
-      #icon-music    { top:55%; }
-      #icon-contact  { top:55%; }
-      #drop-zone { width:104px; height:104px; top:45.5%; }
-      #two-takes { gap:14px; }
     }
   </style>
 </head>
