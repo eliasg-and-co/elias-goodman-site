@@ -1,3 +1,5 @@
 .vercel
 *.mp3
-*.mp3
+# the two folders the site loads audio from must reach the deploy
+!stems/*.mp3
+!sfx/*.mp3
