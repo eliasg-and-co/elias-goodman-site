@@ -248,12 +248,12 @@
   <div id="two-takes">
     <div class="take">
       <div class="take-head"><span class="take-label">take 01</span><button class="take-play" onclick="playTake(this)">[ play ]</button></div>
-      <div class="take-readout">TODO · 41°F · wind 12mph NE · VIX 18.4</div>
+      <div class="take-readout">TODO · 41°F · wind 12mph NE · BTC −2.0%</div>
       <audio class="take-audio" preload="none" src="./loop.mp3"></audio>
     </div>
     <div class="take">
       <div class="take-head"><span class="take-label">take 02</span><button class="take-play" onclick="playTake(this)">[ play ]</button></div>
-      <div class="take-readout">TODO · 38°F · wind 19mph NE · VIX 18.6</div>
+      <div class="take-readout">TODO · 38°F · wind 19mph NE · BTC −1.6%</div>
       <audio class="take-audio" preload="none" src="./loop.mp3"></audio>
     </div>
   </div>
@@ -596,28 +596,38 @@ function closeOverlay(id){document.getElementById(id).classList.remove('open');i
 document.querySelectorAll('.overlay').forEach(ov=>{ov.addEventListener('click',e=>{if(e.target===ov)closeOverlay(ov.id);});});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay.open').forEach(o=>closeOverlay(o.id));});
 // ── RIGHT NOW ──
-// Weather is live: Open-Meteo, keyless and CORS-open, same endpoint/units
-// doux-v3's fetchWeather() uses, plus wind_direction_10m for the compass.
-// TODO(vix): doux-v3 reads VIX from /api/fred?series=vix. That route's CORS
-// allowlist in doux-v3/api/_guard.js is doux.studio + its own previews only,
-// so it is not callable from this origin and the number below is HARDCODED.
-// Either add this host to ALLOWED_STATIC_ORIGINS there, or stand up an
-// equivalent proxy on this project, then read it here.
-const VIX_PLACEHOLDER = '18.4';
+// Everything on this line is live and keyless, so the page stays static.
+// Weather: Open-Meteo, same endpoint/units doux-v3's fetchWeather() uses,
+// plus wind_direction_10m for the compass point.
+// Market: Coinbase 24h open vs last. This replaced VIX, which cannot be had
+// from a static origin -- doux-v3 reads it via /api/fred?series=vix (FRED key
+// + CORS allowlisted to doux.studio), and Stooq refuses cross-origin. To put
+// VIX back, add an /api/vix route to THIS project with a FRED_API_KEY.
+// Either source failing drops its own segment; the line never shows an error.
 const COMPASS = ['N','NE','E','SE','S','SW','W','NW'];
 
+async function weatherSegment(){
+  const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=40.7128&longitude=-74.0060&current=temperature_2m,wind_speed_10m,wind_direction_10m&temperature_unit=fahrenheit&wind_speed_unit=mph');
+  if(!r.ok) throw new Error('weather '+r.status);
+  const c = (await r.json()).current;
+  const dir = COMPASS[Math.round(c.wind_direction_10m/45)%8];
+  return [Math.round(c.temperature_2m)+'°F', 'wind '+Math.round(c.wind_speed_10m)+'mph '+dir];
+}
+async function marketSegment(){
+  const r = await fetch('https://api.exchange.coinbase.com/products/BTC-USD/stats');
+  if(!r.ok) throw new Error('coinbase '+r.status);
+  const d = await r.json();
+  const open = parseFloat(d.open), last = parseFloat(d.last);
+  if(!open || !last) throw new Error('coinbase payload');
+  const pct = ((last-open)/open)*100;
+  return ['BTC '+(pct>=0?'+':'−')+Math.abs(pct).toFixed(1)+'%'];
+}
 async function fetchRightNow(){
   const el = document.getElementById('right-now');
   if(!el) return;
-  try {
-    const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=40.7128&longitude=-74.0060&current=temperature_2m,wind_speed_10m,wind_direction_10m&temperature_unit=fahrenheit&wind_speed_unit=mph');
-    if(!r.ok) throw new Error('weather '+r.status);
-    const c = (await r.json()).current;
-    const dir = COMPASS[Math.round(c.wind_direction_10m/45)%8];
-    el.textContent = 'right now: '+Math.round(c.temperature_2m)+'°F · wind '+Math.round(c.wind_speed_10m)+'mph '+dir+' · VIX '+VIX_PLACEHOLDER;
-  } catch(e) {
-    el.textContent=''; // stays blank rather than showing a failed or loading state
-  }
+  const parts = (await Promise.all([weatherSegment(),marketSegment()].map(p=>p.catch(()=>[]))))
+    .flat();
+  el.textContent = parts.length ? 'right now: '+parts.join(' · ') : '';
 }
 fetchRightNow(); setInterval(fetchRightNow, 60000);
 
