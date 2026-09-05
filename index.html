@@ -179,9 +179,7 @@
 <body>
 <div class="sr-only">
   <h1>Elias Goodman — Brooklyn, NY</h1>
-  <p>doux is a music format that can't be played twice.</p>
-  <p>Finished stems, modulated live by whatever's actually happening around you. A blizzard over Brooklyn, the delayed L Train making you late for work, a match in progress. There's no canonical version. No master to license, nothing for a catalog fund to price as yield, nothing for a model to train on. What you just heard is gone.</p>
-  <p>I'm Elias Goodman. I produce as eegee and spent five years in financial communications watching songs get repriced as assets. doux is the counterargument.</p>
+  <p>I'm Elias, I make music and build tools for artists and their listeners. Right now I'm building doux, a counter-format argument against the heavily commoditized and easily reproducible recorded song.</p>
 </div>
 <div id="cursor"></div>
 <div id="stage">
@@ -385,18 +383,8 @@ function getAmplitude() {
 }
 
 // ── MAGNETIC BIO ──
-// The hero as sentences. The two marked optional restate the thesis in the
-// first paragraph, so shedding them on a cramped viewport costs no claim --
-// they are the last thing given up before the type would go below FONT_MIN.
 const BIO_PARAGRAPHS = [
-  [ {t:"doux is a music format that can't be played twice."} ],
-  [ {t:"Finished stems, modulated live by whatever's actually happening around you."},
-    {t:"A blizzard over Brooklyn, the delayed L Train making you late for work, a match in progress."},
-    {t:"There's no canonical version.", optional:true},
-    {t:"No master to license, nothing for a catalog fund to price as yield, nothing for a model to train on."},
-    {t:"What you just heard is gone.", optional:true} ],
-  [ {t:"I'm Elias Goodman. I produce as eegee and spent five years in financial communications watching songs get repriced as assets."},
-    {t:"doux is the counterargument."} ]
+  "I'm Elias, I make music and build tools for artists and their listeners. Right now I'm building doux, a counter-format argument against the heavily commoditized and easily reproducible recorded song."
 ];
 
 const bioCanvas = document.getElementById('bio-canvas');
@@ -429,7 +417,7 @@ function setupBioCanvas() {
 
 // Lay the paragraphs out at one candidate size. Returns the words and the
 // baseline of the last line so the caller can test the fit.
-function buildWords(size, margin, maxW, homeTop, withOptional) {
+function buildWords(size, margin, maxW, homeTop) {
   FONT_SIZE = size;
   LINE_H = size * 1.72;
   FONT = `italic 300 ${size}px "Fraunces", Georgia, serif`;
@@ -439,8 +427,7 @@ function buildWords(size, margin, maxW, homeTop, withOptional) {
   for (let p = 0; p < BIO_PARAGRAPHS.length; p++) {
     if (p > 0) y += LINE_H * 1.4;   // next line, plus a gap between beats
     let x = margin;
-    const para = BIO_PARAGRAPHS[p].filter(sn => withOptional || !sn.optional).map(sn => sn.t).join(' ');
-    for (const word of para.split(' ')) {
+    for (const word of BIO_PARAGRAPHS[p].split(' ')) {
       const ww = bctx.measureText(word + ' ').width;
       if (x + ww > margin + maxW && x > margin) { x = margin; y += LINE_H; }
       out.push({ text: word, homeX: x, homeY: y, x: x, y: y, vx: 0, vy: 0 });
@@ -452,12 +439,12 @@ function buildWords(size, margin, maxW, homeTop, withOptional) {
 
 // Largest size at or below FONT_MAX whose last baseline clears whatever is
 // pinned below the hero. Reports fits:false if it bottoms out at FONT_MIN.
-function fitHero(margin, maxW, homeTop, withOptional) {
+function fitHero(margin, maxW, homeTop) {
   const below = document.getElementById('hero-below');
   const reserve = below ? canvasH - below.getBoundingClientRect().top + 12 : 40;
   const limit = canvasH - reserve;
   for (let size = FONT_MAX; ; size -= 0.25) {
-    const built = buildWords(size, margin, maxW, homeTop, withOptional);
+    const built = buildWords(size, margin, maxW, homeTop);
     if (built.bottom <= limit) { built.fits = true; return built; }
     if (size <= FONT_MIN) { built.fits = false; return built; }
   }
@@ -472,24 +459,9 @@ function layoutWords() {
   const lower = document.getElementById('icon-music');
   const iconsBottom = lower ? lower.getBoundingClientRect().bottom : 0;
   const homeTop = Math.max(canvasH * (isMobile ? 0.67 : 0.73), iconsBottom + (isMobile ? 16 : 24));
-  const takes = document.getElementById('two-takes');
-
-  // Try the whole composition first. The placeholder takes module is the
-  // lowest-value thing on the page, so it is what yields when the hero
-  // cannot reach its readability floor with it present.
-  // Degradation ladder, least-valuable thing first. The two optional
-  // sentences only restate the thesis, so they go before the takes module,
-  // which is the page's one demonstration of the claim the hero makes.
-  if (takes) takes.style.display = '';
-  let built = fitHero(margin, maxW, homeTop, true);
-  if (!built.fits) built = fitHero(margin, maxW, homeTop, false);
-  if (!built.fits && takes) {
-    takes.style.display = 'none';
-    built = fitHero(margin, maxW, homeTop, false);
-  }
-  // Last resort -- a landscape phone has no room for a hero at any legible
-  // size. Draw none rather than spill it off the bottom; the same copy is
-  // still in the .sr-only block for screen readers and crawlers.
+  // Largest legible size that fits, or none -- a landscape phone has no
+  // room for a hero and the copy is still in .sr-only for screen readers.
+  const built = fitHero(margin, maxW, homeTop);
   words = built.fits ? built.out : [];
 }
 
