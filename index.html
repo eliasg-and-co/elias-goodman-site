@@ -104,8 +104,6 @@
     @keyframes oIn { from{opacity:0} to{opacity:1} }
     .overlay-card { background:var(--bg); border:1px solid var(--ink-faint); width:min(500px,92vw); max-height:88vh; overflow-y:auto; box-shadow:3px 4px 0 var(--ink-faint); animation:cIn .25s ease; }
     @keyframes cIn { from{transform:translateY(10px);opacity:0} to{transform:translateY(0);opacity:1} }
-    #overlay-doux .overlay-card { width:min(960px,96vw); max-height:94vh; }
-    .doux-embed { width:100%; height:70vh; min-height:400px; border:none; display:block; background:var(--ink); }
     .overlay-header { display:flex; align-items:center; justify-content:space-between; padding:18px 22px 14px; border-bottom:1px solid var(--ink-faint); position:sticky; top:0; background:var(--bg); z-index:1; }
     .overlay-title { font-family:var(--serif); font-style:italic; font-weight:300; font-size:22px; letter-spacing:-.01em; }
     .overlay-close { font-family:var(--mono); font-size:8px; font-weight:400; color:var(--ink-light); background:none; border:none; letter-spacing:.12em; transition:color .15s; padding:4px 6px; cursor:pointer; }
@@ -118,6 +116,8 @@
     .essay-date { font-family:var(--mono); font-size:8px; font-weight:400; color:var(--ink-light); letter-spacing:.1em; }
     .built-item:hover .essay-title { color:var(--built-stroke); }
     .built-desc { display:block; font-family:var(--mono); font-size:9px; font-weight:400; line-height:1.7; color:var(--ink-light); margin-top:4px; }
+    .doux-lead { font-family:var(--serif); font-style:italic; font-weight:300; font-size:18px; letter-spacing:-.01em; color:var(--ink); line-height:1.3; }
+    .doux-desc-text + .doux-desc-text { margin-top:12px; }
     .doux-link { font-family:var(--mono); font-size:9px; font-weight:400; color:var(--doux-stroke); text-decoration:none; display:block; margin-top:14px; }
     .doux-desc-text { font-family:var(--mono); font-size:9px; font-weight:400; line-height:1.9; color:var(--ink-mid); margin-top:8px; }
     .music-track-item { display:grid; grid-template-columns:18px 1fr auto; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--ink-faint); }
@@ -271,12 +271,11 @@
 <div class="overlay" id="overlay-doux">
   <div class="overlay-card">
     <div class="overlay-header"><div class="overlay-title">doux</div><button class="overlay-close" onclick="closeOverlay('overlay-doux')">close ×</button></div>
-    <div class="overlay-body" style="padding:0;">
-      <iframe class="doux-embed" src="https://doux.studio" title="doux" allow="autoplay"></iframe>
-      <div style="padding:16px 22px;">
-        <p class="doux-desc-text">Live environmental, financial, and sports data mapped onto a finished session in real time — through a Max for Live device that routes any stream to any parameter. Continuous data moves continuous parameters. Thresholds flip states. Events fire one-shots.</p>
-        <a class="doux-link" href="https://doux.studio" target="_blank">Running now at doux.studio ↗</a>
-      </div>
+    <div class="overlay-body">
+      <p class="doux-lead">A music format that can't be played twice.</p>
+      <p class="doux-desc-text">Finished stems, modulated live by whatever's actually happening around you. A blizzard over Brooklyn, the delayed L Train making you late for work, a match in progress. There's no canonical version. No master to license, nothing for a catalog fund to price as yield, nothing for a model to train on. What you just heard is gone.</p>
+      <p class="doux-desc-text">Live environmental, financial, and sports data mapped onto a finished session in real time — through a Max for Live device that routes any stream to any parameter. Continuous data moves continuous parameters. Thresholds flip states. Events fire one-shots.</p>
+      <a class="doux-link" href="https://doux.studio" target="_blank">Running now at doux.studio ↗</a>
     </div>
   </div>
 </div>
