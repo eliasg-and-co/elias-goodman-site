@@ -138,15 +138,6 @@
     #hero-below { position:fixed; left:48px; right:48px; bottom:26px; z-index:5; display:flex; flex-direction:column; gap:10px; opacity:0; animation:fi .5s ease .65s forwards; pointer-events:none; }
     #hero-below > * { pointer-events:auto; }
     #right-now { font-family:var(--mono); font-size:9px; font-weight:400; letter-spacing:.1em; color:var(--ink-light); min-height:12px; }
-    #two-takes { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
-    .take { display:flex; flex-direction:column; gap:3px; }
-    .take-head { display:flex; align-items:baseline; gap:10px; }
-    .take-label { font-family:var(--mono); font-size:8px; font-weight:400; letter-spacing:.2em; color:var(--ink-light); text-transform:uppercase; }
-    .take-play { font-family:var(--mono); font-size:9px; font-weight:600; letter-spacing:.16em; color:var(--ink-light); background:none; border:none; padding:0; text-transform:uppercase; transition:color .2s; }
-    .take-play:hover { color:var(--ink); }
-    .take-readout { font-family:var(--mono); font-size:8px; font-weight:400; letter-spacing:.06em; color:var(--ink-light); }
-    @media (hover:hover) and (pointer:fine) { .take-play { cursor:none; } }
-    @media (hover:none) { .take-play { cursor:pointer; } }
 
     @keyframes fi { to{opacity:1} }
 
@@ -236,24 +227,8 @@
 
 <div id="bio-canvas-wrap"><canvas id="bio-canvas"></canvas></div>
 
-<!-- TODO(two-takes): STUB. Same track rendered minutes apart. Both <audio>
-     elements point at loop.mp3 and both .take-readout lines are hardcoded
-     placeholders. Swap in the real rendered files and the data snapshot
-     that produced each one. -->
 <div id="hero-below">
   <div id="right-now"></div>
-  <div id="two-takes">
-    <div class="take">
-      <div class="take-head"><span class="take-label">take 01</span><button class="take-play" onclick="playTake(this)">[ play ]</button></div>
-      <div class="take-readout">TODO · 41°F · wind 12mph NE · BTC −2.0%</div>
-      <audio class="take-audio" preload="none" src="./loop.mp3"></audio>
-    </div>
-    <div class="take">
-      <div class="take-head"><span class="take-label">take 02</span><button class="take-play" onclick="playTake(this)">[ play ]</button></div>
-      <div class="take-readout">TODO · 38°F · wind 19mph NE · BTC −1.6%</div>
-      <audio class="take-audio" preload="none" src="./loop.mp3"></audio>
-    </div>
-  </div>
 </div>
 
 <div class="overlay" id="overlay-writing">
@@ -663,20 +638,6 @@ async function fetchRightNow(){
   el.textContent = parts.length ? 'right now: '+parts.join(' · ') : '';
 }
 fetchRightNow(); setInterval(fetchRightNow, 60000);
-
-// ── TWO TAKES (stub) ──
-// TODO: placeholder transport for the stub players. Real takes get wired here.
-function playTake(btn){
-  const take=btn.closest('.take'), a=take.querySelector('.take-audio');
-  document.querySelectorAll('.take').forEach(t=>{
-    if(t!==take){const o=t.querySelector('.take-audio');o.pause();o.currentTime=0;t.querySelector('.take-play').textContent='[ play ]';}
-  });
-  if(a.paused){a.play();btn.textContent='[ stop ]';}
-  else{a.pause();a.currentTime=0;btn.textContent='[ play ]';}
-}
-document.querySelectorAll('.take-audio').forEach(a=>{
-  a.addEventListener('ended',()=>{a.closest('.take').querySelector('.take-play').textContent='[ play ]';});
-});
 
 function handleContact(btn){btn.textContent='sent ✓';btn.style.background='var(--contact-stroke)';setTimeout(()=>{btn.textContent='send →';btn.style.background='';},3000);}
 </script>
