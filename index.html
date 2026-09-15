@@ -36,9 +36,13 @@
 
     @media (hover:hover) and (pointer:fine) {
       body { cursor:none; }
+      /* left/top/width/height are driven every frame from JS (updateCursor) --
+         no CSS transition on them, since the per-frame lerp is what supplies
+         the easing (see updateCursor). Only color/border react instantly to
+         class changes. */
       #cursor { position:fixed; width:8px; height:8px; background:var(--ink); border-radius:50%; pointer-events:none; z-index:9999; transform:translate(-50%,-50%); mix-blend-mode:difference; }
-      #cursor.hovering { width:24px; height:24px; background:transparent; border:1.5px solid var(--ink-mid); }
-      #cursor.dragging { width:10px; height:10px; background:var(--ink-mid); }
+      #cursor.hovering { background:transparent; border:1.5px solid var(--ink-mid); }
+      #cursor.dragging { background:var(--ink-mid); }
     }
     @media (hover:none) { #cursor { display:none!important; } }
 
@@ -58,6 +62,7 @@
     @media (hover:none) { #mute-btn { cursor:pointer; right:24px; } }
     #mute-btn:hover { color:var(--ink); }
     #mute-btn.playing { color:var(--ink-mid); }
+    #headphones-note { position:fixed; top:76px; right:48px; z-index:20; font-family:var(--mono); font-size:7px; font-weight:400; letter-spacing:.2em; line-height:1.7; color:var(--ink-light); text-transform:uppercase; text-align:right; pointer-events:none; user-select:none; opacity:0; animation:fi .5s ease .05s forwards; }
     #mute-btn.playing::before { content:''; position:absolute; top:50%; left:-14px; transform:translateY(-50%); width:6px; height:6px; border-radius:50%; background:var(--music-stroke); animation:pulse 1.8s ease-in-out infinite; }
     @keyframes pulse { 0%,100%{opacity:.3;transform:translateY(-50%) scale(0.8)} 50%{opacity:1;transform:translateY(-50%) scale(1.2)} }
 
@@ -116,6 +121,33 @@
     .essay-date { font-family:var(--mono); font-size:8px; font-weight:400; color:var(--ink-light); letter-spacing:.1em; }
     .built-item:hover .essay-title { color:var(--built-stroke); }
     .built-desc { display:block; font-family:var(--mono); font-size:9px; font-weight:400; line-height:1.7; color:var(--ink-light); margin-top:4px; }
+    /* Built previews: a bezel per item that a short demo clip plays inside.
+       phone = 9:19.5 portrait for a phone screen recording, screen = 16:10
+       for a desktop/Ableton capture. The frame stays empty with a note until
+       the file exists in /previews/. */
+    .built-preview-toggle { display:inline-block; margin-top:7px; padding:0; font-family:var(--mono); font-size:8px; font-weight:400; letter-spacing:.16em; text-transform:uppercase; color:var(--built-stroke); background:none; border:none; cursor:pointer; opacity:.7; transition:opacity .15s; }
+    .built-preview-toggle:hover { opacity:1; }
+    /* Kitchen-drawer open/close: grid-template-rows 0fr->1fr animates height
+       both ways with the same timing, no JS-measured heights and no display
+       toggle (which would make it snap shut instead of sliding closed). */
+    .built-preview { grid-column:1 / -1; display:grid; grid-template-rows:0fr; transition:grid-template-rows .5s cubic-bezier(0.16,1,0.3,1); }
+    .built-item.previewing .built-preview { grid-template-rows:1fr; }
+    .built-preview-inner { min-height:0; overflow:hidden; display:flex; justify-content:center; padding:0 0 6px; }
+    .sports-sub-list { width:100%; padding-left:18px; border-left:1px solid var(--ink-faint); }
+    .sports-sub-list .built-item { padding:10px 0; }
+    .sports-sub-list .built-item:first-child { border-top:none; }
+    .sports-sub-list .essay-title { font-size:14px; }
+    .sports-sub-list .built-preview-toggle { display:block; margin-top:10px; }
+    .built-divider { display:flex; align-items:center; gap:10px; margin:18px 0 4px; }
+    .built-divider::before { content:''; flex:1; height:2px; background:var(--ink); }
+    .built-divider span { font-family:var(--mono); font-size:8px; font-weight:600; letter-spacing:.2em; text-transform:uppercase; color:var(--ink-mid); white-space:nowrap; }
+    .device-frame { position:relative; overflow:hidden; background:var(--bg2); border:1px solid var(--ink-faint); box-shadow:3px 4px 0 var(--ink-faint); }
+    .device-frame.phone { width:min(196px,58%); aspect-ratio:9 / 19.5; border-radius:22px; }
+    .device-frame.screen { width:100%; aspect-ratio:16 / 10; border-radius:6px; }
+    .device-frame video { position:absolute; inset:0; width:100%; height:100%; display:block; object-fit:cover; background:#000; }
+    .device-frame:not(.loaded) video { visibility:hidden; }
+    .device-empty { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:20px; text-align:center; font-family:var(--mono); font-size:8px; font-weight:400; letter-spacing:.18em; line-height:1.9; text-transform:uppercase; color:var(--ink-light); }
+    .device-frame.loaded .device-empty { display:none; }
     .doux-lead { font-family:var(--serif); font-style:italic; font-weight:300; font-size:18px; letter-spacing:-.01em; color:var(--ink); line-height:1.3; }
     .doux-desc-text + .doux-desc-text { margin-top:12px; }
     .doux-link { font-family:var(--mono); font-size:9px; font-weight:400; color:var(--doux-stroke); text-decoration:none; display:block; margin-top:14px; }
@@ -137,7 +169,8 @@
 
     #hero-below { position:fixed; left:48px; right:48px; bottom:26px; z-index:5; display:flex; flex-direction:column; gap:10px; opacity:0; animation:fi .5s ease .65s forwards; pointer-events:none; }
     #hero-below > * { pointer-events:auto; }
-    #right-now { font-family:var(--mono); font-size:9px; font-weight:400; letter-spacing:.1em; color:var(--ink-light); min-height:12px; }
+    #right-now { font-family:var(--mono); font-size:9px; font-weight:400; letter-spacing:.1em; line-height:1.7; color:var(--ink-light); min-height:12px; }
+    .rn-seg { display:inline-block; }
 
     @keyframes fi { to{opacity:1} }
 
@@ -161,6 +194,7 @@
     @media (hover:none) {
       #name-block { left:24px; top:28px; }
       #mute-btn { top:28px; }
+      #headphones-note { top:54px; right:24px; }
       #stage { --cy:45%; --ring-r:36vmin; }
       #drop-zone { width:130px; height:130px; }
       #hero-below { left:24px; right:24px; bottom:9px; gap:5px; }
@@ -202,6 +236,7 @@
     </div>
   </div>
   <button id="mute-btn" onclick="toggleAudio()">[ play ]</button>
+  <div id="headphones-note" aria-hidden="true">headphones<br>recommended</div>
   <div id="drop-zone"><div class="zone-label" id="zone-label">drag here<br>to open</div></div>
   <div class="icon" id="icon-writing" data-target="overlay-writing">
     <div class="icon-circle"><svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
@@ -235,10 +270,10 @@
   <div class="overlay-card">
     <div class="overlay-header"><div class="overlay-title">writing</div><button class="overlay-close" onclick="closeOverlay('overlay-writing')">close ×</button></div>
     <div class="overlay-body">
+      <a class="essay-item" href="https://substack.com/home/post/p-213617458" target="_blank"><span class="essay-title">Sonifying Soccer</span><span class="essay-date">2026</span></a>
       <a class="essay-item" href="https://eegee.substack.com/p/songs-are-a-prison" target="_blank"><span class="essay-title">Songs Are a Prison</span><span class="essay-date">2026</span></a>
       <a class="essay-item" href="https://eegee.substack.com/p/02-what-the-blizzard-composed" target="_blank"><span class="essay-title">What the Blizzard Composed</span><span class="essay-date">2026</span></a>
       <a class="essay-item" href="https://eegee.substack.com/p/post-experiment-01-say-when-for-ai" target="_blank"><span class="essay-title">Say When for AI in Music</span><span class="essay-date">2025</span></a>
-      <a class="essay-item" href="https://eegee.substack.com" target="_blank"><span class="essay-title">Music Used to Be Tribal</span><span class="essay-date">forthcoming</span></a>
       <a class="essay-item" href="https://eegee.substack.com" target="_blank"><span class="essay-title">All essays →</span><span class="essay-date">Substack</span></a>
     </div>
   </div>
@@ -266,11 +301,20 @@
   <div class="overlay-card">
     <div class="overlay-header"><div class="overlay-title">built</div><button class="overlay-close" onclick="closeOverlay('overlay-built')">close ×</button></div>
     <div class="overlay-body">
-      <div class="essay-item built-item"><span><span class="essay-title">doux Live</span><span class="built-desc">Max for Live device mapping arbitrary data streams to session parameters</span></span><span class="essay-date">2026</span></div>
-      <div class="essay-item built-item"><span><span class="essay-title">doux · field</span><span class="built-desc">phone-native capture; ambient audio routed through live local conditions</span></span><span class="essay-date">2026</span></div>
-      <div class="essay-item built-item"><span><span class="essay-title">World Cup engine</span><span class="built-desc">ESPN API to serverless proxy to Tone.js, running live during matches</span></span><span class="essay-date">2026</span></div>
-      <div class="essay-item built-item"><span><span class="essay-title">NBA pipeline</span><span class="built-desc">Python to OSC to Ableton, ran through the Knicks playoff run</span></span><span class="essay-date">2025</span></div>
-      <div class="essay-item built-item"><span><span class="essay-title">Scout</span><span class="built-desc">desktop companion capturing Ableton session state, converting patches to Tone.js</span></span><span class="essay-date">—</span></div>
+      <div class="essay-item built-item" data-preview="previews/biometric-beats.mp4" data-frame="phone"><span><span class="essay-title">biometric beats</span><span class="built-desc">run training data — pace, heart rate, cadence — driving musical parameters in the work. open call: if you train hard, <a href="#" onclick="event.preventDefault();closePreview(this.closest('.built-item'));openOverlay('overlay-contact');">get in touch</a> to hear what it sounds like.</span><button class="built-preview-toggle" type="button" aria-expanded="false" onclick="togglePreview(this.closest('.built-item'))">preview ↓</button></span><span class="essay-date">in progress</span></div>
+      <div class="built-divider"><span>complete</span></div>
+      <div class="essay-item built-item" data-preview="previews/doux-live.mp4" data-frame="screen"><span><span class="essay-title">doux | live</span><span class="built-desc">Max for Live device mapping arbitrary data streams to session parameters</span><button class="built-preview-toggle" type="button" aria-expanded="false" onclick="togglePreview(this.closest('.built-item'))">preview ↓</button></span><span class="essay-date">2026</span></div>
+      <div class="essay-item built-item" data-preview="previews/doux-field.mp4" data-frame="phone"><span><span class="essay-title">doux | field</span><span class="built-desc">phone-native capture; ambient audio routed through live local conditions</span><button class="built-preview-toggle" type="button" aria-expanded="false" onclick="togglePreview(this.closest('.built-item'))">preview ↓</button></span><span class="essay-date">2026</span></div>
+      <div class="essay-item built-item" data-preview="previews/scout.mp4" data-frame="screen"><span><span class="essay-title">doux | scout</span><span class="built-desc">desktop companion capturing Ableton session state, converting patches to Tone.js</span><button class="built-preview-toggle" type="button" aria-expanded="false" onclick="togglePreview(this.closest('.built-item'))">preview ↓</button></span><span class="essay-date">—</span></div>
+      <div class="essay-item built-item" id="built-sports"><span><span class="essay-title">sports, sonified</span><span class="built-desc">live match data turned into composition — the Knicks' run, the World Cup, the US Open — a system that hears play and lets the match compose itself</span><button class="built-preview-toggle" type="button" aria-expanded="false" onclick="togglePreview(this.closest('.built-item'))">expand ↓</button></span><span class="essay-date">2026</span>
+        <div class="built-preview"><div class="built-preview-inner">
+          <div class="sports-sub-list">
+            <div class="essay-item built-item" data-preview="previews/nba.mp4" data-frame="screen"><span><span class="essay-title">Knicks Championship</span><button class="built-preview-toggle" type="button" aria-expanded="false" onclick="togglePreview(this.closest('.built-item'))">preview ↓</button></span><span class="essay-date">2025</span></div>
+            <div class="essay-item built-item" data-preview="previews/world-cup.mp4" data-frame="screen"><span><span class="essay-title">World Cup</span><button class="built-preview-toggle" type="button" aria-expanded="false" onclick="togglePreview(this.closest('.built-item'))">preview ↓</button></span><span class="essay-date">2026</span></div>
+            <div class="essay-item built-item" data-preview="previews/us-open.mp4" data-frame="screen"><span><span class="essay-title">U.S. Open</span><button class="built-preview-toggle" type="button" aria-expanded="false" onclick="togglePreview(this.closest('.built-item'))">preview ↓</button></span><span class="essay-date">2025</span></div>
+          </div>
+        </div></div>
+      </div>
     </div>
   </div>
 </div>
@@ -279,9 +323,9 @@
     <div class="overlay-header"><div class="overlay-title">get in touch</div><button class="overlay-close" onclick="closeOverlay('overlay-contact')">close ×</button></div>
     <div class="overlay-body">
       <p class="contact-intro">Artists who want a piece built from a source. Venues and commissioners. Anyone who wants to license the system rather than buy the file.</p>
-      <div class="contact-field"><label>name</label><input type="text" placeholder="—"></div>
-      <div class="contact-field"><label>email</label><input type="email" placeholder="—"></div>
-      <div class="contact-field"><label>message</label><textarea rows="5" placeholder="—"></textarea></div>
+      <div class="contact-field"><label>name</label><input type="text" id="contact-name" placeholder="—"></div>
+      <div class="contact-field"><label>email</label><input type="email" id="contact-email-input" placeholder="—"></div>
+      <div class="contact-field"><label>message</label><textarea id="contact-message" rows="5" placeholder="—"></textarea></div>
       <button class="contact-submit" onclick="handleContact(this)">send →</button>
       <p class="contact-email">or: <a href="mailto:esg444@gmail.com">esg444@gmail.com</a></p>
     </div>
@@ -291,17 +335,56 @@
 <script>
 const isMobile = window.matchMedia('(hover:none)').matches;
 const cursor = document.getElementById('cursor');
+let mouseX=0, mouseY=0;
 if (!isMobile && cursor) {
-  document.addEventListener('mousemove', e => { cursor.style.left=e.clientX+'px'; cursor.style.top=e.clientY+'px'; }, {passive:true});
+  document.addEventListener('mousemove', e => { mouseX=e.clientX; mouseY=e.clientY; }, {passive:true});
 }
 function bindHover(scope) {
   if (isMobile) return;
-  (scope.querySelectorAll ? scope.querySelectorAll('a,button,.icon,.social-link') : []).forEach(el => {
+  (scope.querySelectorAll ? scope.querySelectorAll('a,button,.social-link') : []).forEach(el => {
     el.addEventListener('mouseenter', () => cursor && cursor.classList.add('hovering'));
     el.addEventListener('mouseleave', () => cursor && cursor.classList.remove('hovering'));
   });
 }
 bindHover(document);
+
+// ── SWALLOW CURSOR ──
+// Continuous, distance-driven -- no enter/leave events and no fixed-duration
+// transition. Every frame, each icon's pull is a smoothstep of how far the
+// raw mouse sits inside its capture ring (0 at the ring edge, 1 dead centre),
+// so the grow/pull-in and the shrink/let-go both scale with proximity and
+// read as symmetric. The displayed position/size then ease toward that
+// target with a per-frame lerp, so a fast flick across the ring is chased
+// smoothly instead of snapping once some timer elapses.
+const CURSOR_BASE=8, CURSOR_DRAG=10, CURSOR_HOVER=24, CURSOR_CATCH=70;
+let curX=0, curY=0, curSize=CURSOR_BASE, curInit=false;
+function updateCursor(){
+  if(isMobile||!cursor) return;
+  let tx=mouseX, ty=mouseY, size=cursor.classList.contains('hovering')?CURSOR_HOVER:CURSOR_BASE;
+  if(dragging){
+    size=CURSOR_DRAG;
+  } else {
+    let bestT=0, bestX=mouseX, bestY=mouseY, bestSize=CURSOR_BASE;
+    document.querySelectorAll('.icon').forEach(icon=>{
+      const el=icon.querySelector('.icon-circle'); if(!el) return;
+      const r=el.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2;
+      const ring=r.width/2+CURSOR_CATCH, d=Math.hypot(mouseX-cx,mouseY-cy);
+      if(d<ring){
+        let t=1-d/ring; t=t*t*(3-2*t);   // smoothstep: eases in near the edge, not a hard cutoff
+        if(t>bestT){ bestT=t; bestX=cx; bestY=cy; bestSize=r.width+16; }
+      }
+    });
+    if(bestT>0){
+      tx=mouseX+(bestX-mouseX)*bestT; ty=mouseY+(bestY-mouseY)*bestT;
+      size=CURSOR_BASE+(bestSize-CURSOR_BASE)*bestT;
+    }
+  }
+  if(!curInit){ curX=tx; curY=ty; curSize=size; curInit=true; }
+  const k=dragging?1:0.3;
+  curX+=(tx-curX)*k; curY+=(ty-curY)*k; curSize+=(size-curSize)*k;
+  cursor.style.left=curX+'px'; cursor.style.top=curY+'px';
+  cursor.style.width=curSize+'px'; cursor.style.height=curSize+'px';
+}
 
 // ── THEME ──
 function getSunTimes() {
@@ -656,6 +739,7 @@ function loop() {
   smoothAmp = smoothAmp + (raw - smoothAmp) * 0.12;
   updateWords(smoothAmp);
   modulateStems();
+  updateCursor();
 }
 
 window.addEventListener('load', () => {
@@ -676,7 +760,8 @@ function iconCenter(icon){const r=icon.getBoundingClientRect();return{x:r.left+r
 function startDrag(icon,cx,cy) {
   if(icon.classList.contains('in-zone')) return;
   clearTimeout(longPressTimer); icon.classList.remove('press-peek');
-  dragging=icon; if(!isMobile&&cursor) cursor.classList.add('dragging');
+  dragging=icon;
+  if(!isMobile&&cursor) cursor.classList.add('dragging');
   icon.classList.add('dragging-now');
   const r=icon.getBoundingClientRect(); snapLeft=r.left; snapTop=r.top;
   iconHomes[icon.id]={left:r.left,top:r.top};
@@ -757,19 +842,75 @@ document.addEventListener('mouseup',e=>endDrag(e.clientX,e.clientY));
 document.addEventListener('touchmove',e=>{clearTimeout(longPressTimer);moveDrag(e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
 
 function openOverlay(id){const ov=document.getElementById(id);ov.classList.add('open');bindHover(ov);}
-function closeOverlay(id){document.getElementById(id).classList.remove('open');if(activeIcon&&activeIcon.dataset.target===id)releaseFromZone(activeIcon);}
+function closeOverlay(id){const ov=document.getElementById(id);ov.classList.remove('open');ov.querySelectorAll('video').forEach(v=>v.pause());if(activeIcon&&activeIcon.dataset.target===id)releaseFromZone(activeIcon);}
+
+// ── BUILT PREVIEWS ──
+// Each built item can carry a short demo. data-preview names a file in
+// /previews/, data-frame picks the bezel (phone | screen). The frame is built
+// and the file requested only on the first click; a missing file leaves the
+// frame with its note instead of a broken player. One preview open at a time.
+// A "group" item (sports, sonified) has no data-preview -- its drawer holds
+// static sub-items rather than a video, so it opens/closes but never builds
+// a device frame. Toggling only closes items that are neither an ancestor
+// nor a descendant of the one clicked, so opening a sub-preview doesn't
+// slam its own parent drawer shut, and opening the parent doesn't stop a
+// sibling group's open sub-preview.
+function closePreview(item){
+  item.classList.remove('previewing');
+  const v=item.querySelector(':scope > .built-preview video'); if(v) v.pause();
+  const b=item.querySelector(':scope > span > .built-preview-toggle');
+  const isGroup=!item.dataset.preview;
+  b.textContent=isGroup?'expand ↓':'preview ↓'; b.setAttribute('aria-expanded','false');
+}
+function togglePreview(item){
+  const wasOpen=item.classList.contains('previewing');
+  document.querySelectorAll('.built-item.previewing').forEach(other=>{
+    if(other!==item && !other.contains(item) && !item.contains(other)) closePreview(other);
+  });
+  if(wasOpen){ closePreview(item); return; }
+  const isGroup=!item.dataset.preview;
+  if(!isGroup){
+    let box=item.querySelector(':scope > .built-preview');
+    if(!box){
+      box=document.createElement('div'); box.className='built-preview';
+      const inner=document.createElement('div'); inner.className='built-preview-inner';
+      const frame=document.createElement('div'); frame.className='device-frame '+(item.dataset.frame||'screen');
+      const note=document.createElement('div'); note.className='device-empty'; note.textContent='demo coming';
+      const video=document.createElement('video');
+      video.muted=true; video.loop=true; video.playsInline=true; video.controls=true; video.preload='metadata';
+      video.addEventListener('loadeddata',()=>{frame.classList.add('loaded');video.play().catch(()=>{});});
+      video.addEventListener('error',()=>frame.classList.remove('loaded'));
+      frame.append(video,note); inner.append(frame); box.append(inner); item.append(box);
+    }
+    const video=box.querySelector('video');
+    if(item.dataset.preview&&!video.getAttribute('src')) video.src=item.dataset.preview; else if(box.querySelector('.loaded')) video.play().catch(()=>{});
+  }
+  item.classList.add('previewing');
+  const b=item.querySelector(':scope > span > .built-preview-toggle'); b.textContent=isGroup?'collapse ↑':'hide ↑'; b.setAttribute('aria-expanded','true');
+}
 document.querySelectorAll('.overlay').forEach(ov=>{ov.addEventListener('click',e=>{if(e.target===ov)closeOverlay(ov.id);});});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay.open').forEach(o=>closeOverlay(o.id));});
 // ── RIGHT NOW ──
 // Everything on this line is live and keyless, so the page stays static.
 // Weather: Open-Meteo, same endpoint/units doux-v3's fetchWeather() uses,
-// plus wind_direction_10m for the compass point.
-// Market: Coinbase 24h open vs last. This replaced VIX, which cannot be had
-// from a static origin -- doux-v3 reads it via /api/fred?series=vix (FRED key
-// + CORS allowlisted to doux.studio), and Stooq refuses cross-origin. To put
-// VIX back, add an /api/vix route to THIS project with a FRED_API_KEY.
-// Either source failing drops its own segment; the line never shows an error.
+//   plus wind_direction_10m for the compass point.
+// Subway: the MTA's public service-alerts feed (JSON, CORS open, no key).
+//   Counts the routes on every Delays alert active this minute -- the feed
+//   doux-v3's /api/mta-system reads, narrowed to delays.
+// Sports: ESPN's public scoreboard feeds (CORS open, no key). A live MLB
+//   game wins, Mets/Yankees first; else a live tennis singles match; else
+//   today's most recent MLB final; else the next first pitch.
+// Run: static, typed in from the last Strava export (LAST_RUN below).
+// BTC used to hold the subway's slot; it is in git history if wanted back.
+// Each source refreshes on its own cadence and drops its own segment when it
+// fails; the line never shows an error. Nothing fetches while the tab is
+// hidden.
 const COMPASS = ['N','NE','E','SE','S','SW','W','NW'];
+const NY_TEAMS = ['NYM','NYY'];
+// From test_run_one.fit / .gpx, Mon 31 Aug 2026, 6:41pm. Distance is the
+// FIT session total; time and pace are Strava's moving figures.
+const LAST_RUN = { date:'2026-08-31', miles:6.74, time:'53:37', pace:'7:57', climbFt:75 };
+const feed = { weather:[], subway:[], mlb:[], tennis:[] };
 
 async function weatherSegment(){
   const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=40.7128&longitude=-74.0060&current=temperature_2m,wind_speed_10m,wind_direction_10m&temperature_unit=fahrenheit&wind_speed_unit=mph');
@@ -778,25 +919,116 @@ async function weatherSegment(){
   const dir = COMPASS[Math.round(c.wind_direction_10m/45)%8];
   return [Math.round(c.temperature_2m)+'°F', 'wind '+Math.round(c.wind_speed_10m)+'mph '+dir];
 }
-async function marketSegment(){
-  const r = await fetch('https://api.exchange.coinbase.com/products/BTC-USD/stats');
-  if(!r.ok) throw new Error('coinbase '+r.status);
-  const d = await r.json();
-  const open = parseFloat(d.open), last = parseFloat(d.last);
-  if(!open || !last) throw new Error('coinbase payload');
-  const pct = ((last-open)/open)*100;
-  return ['BTC '+(pct>=0?'+':'−')+Math.abs(pct).toFixed(1)+'%'];
+async function subwaySegment(){
+  const r = await fetch('https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/camsys%2Fsubway-alerts.json');
+  if(!r.ok) throw new Error('mta '+r.status);
+  const now = Date.now()/1000, routes = new Set();
+  for(const e of (await r.json()).entity||[]){
+    const a = e.alert; if(!a) continue;
+    if((a['transit_realtime.mercury_alert']||{}).alert_type!=='Delays') continue;
+    // active_period is epoch seconds; an alert with none is always active
+    const periods = a.active_period||[];
+    if(periods.length && !periods.some(p=>(p.start==null||now>=p.start)&&(p.end==null||now<p.end))) continue;
+    for(const ie of a.informed_entity||[]) if(ie.route_id) routes.add(ie.route_id);
+  }
+  const lines = [...routes].sort();
+  return [lines.length ? 'subway delays: '+lines.join(' ') : 'subway delays: none'];
 }
-async function fetchRightNow(){
-  const el = document.getElementById('right-now');
-  if(!el) return;
-  const parts = (await Promise.all([weatherSegment(),marketSegment()].map(p=>p.catch(()=>[]))))
-    .flat();
-  el.textContent = parts.length ? 'right now: '+parts.join(' · ') : '';
+async function fetchMlb(){
+  const r = await fetch('https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard');
+  if(!r.ok) throw new Error('mlb '+r.status);
+  return ((await r.json()).events||[]).map(ev=>{
+    const c = ev.competitions[0], st = c.status.type;
+    const side = h => { const t = c.competitors.find(x=>x.homeAway===h); return {abbr:t.team.abbreviation, name:t.team.shortDisplayName, score:+t.score||0}; };
+    const home = side('home'), away = side('away');
+    return { state:st.state, detail:(st.shortDetail||'').toLowerCase(), when:new Date(ev.date), home, away,
+             ny:NY_TEAMS.includes(home.abbr)||NY_TEAMS.includes(away.abbr) };
+  });
 }
-fetchRightNow(); setInterval(fetchRightNow, 60000);
+function liveMlb(games){ return games.filter(g=>g.state==='in').sort((x,y)=>y.ny-x.ny)[0]||null; }
+function mlbLine(g){
+  if(g.state==='pre'){
+    const t = g.when.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:'America/New_York'}).replace(' ','').toLowerCase();
+    return g.away.name+' at '+g.home.name+', '+t;
+  }
+  return g.away.name+' '+g.away.score+'–'+g.home.score+' '+g.home.name+(g.detail?', '+g.detail:'');
+}
+function surname(a){ return (a.shortName||'').replace(/^[A-Z]\.\s*/,'') || (a.displayName||'').split(' ').pop(); }
+async function fetchTennis(){
+  // Both tours: a slam sits in both feeds, so matches are deduped by id.
+  const feeds = await Promise.all(['atp','wta'].map(t=>
+    fetch('https://site.api.espn.com/apis/site/v2/sports/tennis/'+t+'/scoreboard').then(r=>r.ok?r.json():{}).catch(()=>({}))));
+  const seen = new Set(), live = [];
+  for(const d of feeds) for(const ev of d.events||[]) for(const g of ev.groupings||[]) for(const c of g.competitions||[]){
+    if(seen.has(c.id) || ((c.status||{}).type||{}).state!=='in') continue;
+    if(!/singles/i.test((g.grouping||{}).displayName||'')) continue;   // two names fit on the line, four don't
+    const [a,b] = c.competitors||[];
+    if(!a||!b||!a.athlete||!b.athlete) continue;
+    seen.add(c.id);
+    live.push({ event:ev.shortName||ev.name, major:!!ev.major, detail:(c.status.type.detail||'').toLowerCase(),
+      a:{name:surname(a.athlete), sets:(a.linescores||[]).map(l=>l.value|0)},
+      b:{name:surname(b.athlete), sets:(b.linescores||[]).map(l=>l.value|0)} });
+  }
+  return live.sort((x,y)=>y.major-x.major);
+}
+function tennisLine(m){
+  const sets = m.a.sets.map((v,i)=>v+'–'+(m.b.sets[i]||0)).join(' ');
+  return m.event+': '+m.a.name+(sets?' '+sets+' ':' vs ')+m.b.name+(m.detail?', '+m.detail:'');
+}
+function sportsSegment(){
+  const g = liveMlb(feed.mlb); if(g) return [mlbLine(g)];
+  if(feed.tennis.length) return [tennisLine(feed.tennis[0])];
+  const done = feed.mlb.filter(g=>g.state==='post').sort((x,y)=>(y.ny-x.ny)||(y.when-x.when))[0];
+  if(done) return [mlbLine(done)];
+  const next = feed.mlb.filter(g=>g.state==='pre').sort((x,y)=>(y.ny-x.ny)||(x.when-y.when))[0];
+  return next ? [mlbLine(next)] : [];
+}
+function runSegment(){ return ['last run: '+LAST_RUN.miles+' mi in '+LAST_RUN.time+', '+LAST_RUN.pace+'/mi']; }
 
-function handleContact(btn){btn.textContent='sent ✓';btn.style.background='var(--contact-stroke)';setTimeout(()=>{btn.textContent='send →';btn.style.background='';},3000);}
+function renderRightNow(){
+  const el = document.getElementById('right-now'); if(!el) return;
+  const parts = [...feed.weather, ...feed.subway, ...sportsSegment(), ...runSegment()];
+  const before = el.offsetHeight;
+  el.replaceChildren('right now: ', ...parts.flatMap((p,i)=>{
+    const seg = document.createElement('span'); seg.className='rn-seg'; seg.textContent=p;
+    return i ? [' · ', seg] : [seg];
+  }));
+  // The hero is sized to clear this line; re-fit it if the line just wrapped.
+  if(canvasW && el.offsetHeight!==before) layoutWords();
+}
+let rnTick = 0;
+function refreshRightNow(){
+  if(document.hidden) return;
+  const t = rnTick++;
+  const pull = (key, job) => job().then(v=>{feed[key]=v;}).catch(()=>{feed[key]=[];}).then(renderRightNow);
+  pull('weather', weatherSegment);
+  pull('mlb', fetchMlb);
+  if(t%2===0) pull('subway', subwaySegment);                       // ~85KB on the wire, every 2 min
+  if(t%3===0 && !liveMlb(feed.mlb)) pull('tennis', fetchTennis);  // heaviest feed, and moot while MLB is live
+}
+refreshRightNow(); setInterval(refreshRightNow, 60000);
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) refreshRightNow(); });
+
+async function handleContact(btn){
+  const nameEl=document.getElementById('contact-name'), emailEl=document.getElementById('contact-email-input'), msgEl=document.getElementById('contact-message');
+  const name=nameEl.value.trim(), email=emailEl.value.trim(), message=msgEl.value.trim();
+  if(!name||!email||!message){
+    btn.textContent='fill it out first →';
+    setTimeout(()=>{btn.textContent='send →';},2200);
+    return;
+  }
+  btn.disabled=true; btn.textContent='sending…';
+  try{
+    const r=await fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,message})});
+    if(!r.ok) throw new Error('send failed');
+    btn.textContent='sent ✓'; btn.style.background='var(--contact-stroke)';
+    nameEl.value=''; emailEl.value=''; msgEl.value='';
+  }catch(e){
+    btn.textContent="couldn't send — email me directly";
+  }finally{
+    setTimeout(()=>{btn.disabled=false; btn.textContent='send →'; btn.style.background='';},3200);
+  }
+}
 </script>
 </body>
 </html>
