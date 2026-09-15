@@ -363,7 +363,11 @@ function updateCursor(){
   let tx=mouseX, ty=mouseY, size=cursor.classList.contains('hovering')?CURSOR_HOVER:CURSOR_BASE;
   if(dragging){
     size=CURSOR_DRAG;
-  } else {
+  } else if(!document.querySelector('.overlay.open')){
+    // Icons sit behind an open overlay (z-index) but are still in the DOM at
+    // their normal screen position, so distance-based capture would keep
+    // pulling the cursor toward one right through the modal. Skip icon
+    // influence entirely while any overlay is open.
     let bestT=0, bestX=mouseX, bestY=mouseY, bestSize=CURSOR_BASE;
     document.querySelectorAll('.icon').forEach(icon=>{
       const el=icon.querySelector('.icon-circle'); if(!el) return;
