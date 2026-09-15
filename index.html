@@ -35,7 +35,13 @@
     body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:0; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E"); }
 
     @media (hover:hover) and (pointer:fine) {
-      body { cursor:none; }
+      /* The browser's own pointer cursor is set directly on <a>/<button>
+         elements (by the UA, or by our own cursor:pointer rules for touch
+         fallback below) -- that's a same-element declaration, so it beats
+         the inherited cursor:none from body regardless of source order.
+         This rule re-asserts none at the same a/button specificity so only
+         the custom circle ever shows. */
+      body, a, button { cursor:none; }
       /* left/top/width/height are driven every frame from JS (updateCursor) --
          no CSS transition on them, since the per-frame lerp is what supplies
          the easing (see updateCursor). Only color/border react instantly to
@@ -58,7 +64,6 @@
     .site-tagline { font-family:var(--mono); font-size:8px; font-weight:400; letter-spacing:.2em; color:var(--ink-light); text-transform:uppercase; margin-top:9px; }
 
     #mute-btn { position:fixed; top:50px; right:48px; z-index:20; font-family:var(--mono); font-size:11px; font-weight:600; letter-spacing:.2em; color:var(--ink-light); background:none; border:none; padding:4px 0; text-transform:uppercase; transition:color .2s; white-space:nowrap; opacity:0; animation:fi .5s ease .05s forwards; }
-    @media (hover:hover) and (pointer:fine) { #mute-btn { cursor:none; } }
     @media (hover:none) { #mute-btn { cursor:pointer; right:24px; } }
     #mute-btn:hover { color:var(--ink); }
     #mute-btn.playing { color:var(--ink-mid); }
@@ -111,7 +116,8 @@
     @keyframes cIn { from{transform:translateY(10px);opacity:0} to{transform:translateY(0);opacity:1} }
     .overlay-header { display:flex; align-items:center; justify-content:space-between; padding:18px 22px 14px; border-bottom:1px solid var(--ink-faint); position:sticky; top:0; background:var(--bg); z-index:1; }
     .overlay-title { font-family:var(--serif); font-style:italic; font-weight:300; font-size:22px; letter-spacing:-.01em; }
-    .overlay-close { font-family:var(--mono); font-size:8px; font-weight:400; color:var(--ink-light); background:none; border:none; letter-spacing:.12em; transition:color .15s; padding:4px 6px; cursor:pointer; }
+    .overlay-close { font-family:var(--mono); font-size:8px; font-weight:400; color:var(--ink-light); background:none; border:none; letter-spacing:.12em; transition:color .15s; padding:4px 6px; }
+    @media (hover:none) { .overlay-close { cursor:pointer; } }
     .overlay-close:hover { color:var(--ink); }
     .overlay-body { padding:22px; }
     .essay-item { display:grid; grid-template-columns:1fr auto; align-items:baseline; gap:16px; padding:13px 0; border-bottom:1px solid var(--ink-faint); text-decoration:none; color:inherit; transition:all .15s; }
@@ -125,7 +131,8 @@
        phone = 9:19.5 portrait for a phone screen recording, screen = 16:10
        for a desktop/Ableton capture. The frame stays empty with a note until
        the file exists in /previews/. */
-    .built-preview-toggle { display:inline-block; margin-top:7px; padding:0; font-family:var(--mono); font-size:8px; font-weight:400; letter-spacing:.16em; text-transform:uppercase; color:var(--built-stroke); background:none; border:none; cursor:pointer; opacity:.7; transition:opacity .15s; }
+    .built-preview-toggle { display:inline-block; margin-top:7px; padding:0; font-family:var(--mono); font-size:8px; font-weight:400; letter-spacing:.16em; text-transform:uppercase; color:var(--built-stroke); background:none; border:none; opacity:.7; transition:opacity .15s; }
+    @media (hover:none) { .built-preview-toggle { cursor:pointer; } }
     .built-preview-toggle:hover { opacity:1; }
     /* Kitchen-drawer open/close: grid-template-rows 0fr->1fr animates height
        both ways with the same timing, no JS-measured heights and no display
@@ -162,7 +169,8 @@
     .contact-field label { font-family:var(--mono); font-size:7px; font-weight:400; letter-spacing:.2em; color:var(--ink-light); text-transform:uppercase; }
     .contact-field input,.contact-field textarea { background:var(--bg2); border:1px solid var(--ink-faint); padding:9px 11px; font-family:var(--serif); font-size:15px; font-weight:300; color:var(--ink); outline:none; resize:none; transition:border-color .15s; cursor:auto; }
     .contact-field input:focus,.contact-field textarea:focus { border-color:var(--contact-stroke); }
-    .contact-submit { font-family:var(--mono); font-size:8px; font-weight:400; letter-spacing:.2em; text-transform:uppercase; background:var(--ink); color:var(--bg); border:none; padding:11px 22px; cursor:pointer; width:100%; margin-top:6px; transition:background .15s; }
+    .contact-submit { font-family:var(--mono); font-size:8px; font-weight:400; letter-spacing:.2em; text-transform:uppercase; background:var(--ink); color:var(--bg); border:none; padding:11px 22px; width:100%; margin-top:6px; transition:background .15s; }
+    @media (hover:none) { .contact-submit { cursor:pointer; } }
     .contact-submit:hover { background:var(--contact-stroke); }
     .contact-email { font-family:var(--mono); font-size:8px; font-weight:400; color:var(--ink-light); margin-top:10px; letter-spacing:.08em; }
     .contact-email a { color:var(--contact-stroke); text-decoration:none; }
@@ -184,7 +192,6 @@
     .social-link[aria-label="Instagram"]:hover svg  { fill:url(#ig-grad); }
     .social-link[aria-label="TikTok"]:hover svg     { fill:#161823; }
     .social-link[aria-label="Substack"]:hover svg   { fill:#ff6719; }
-    @media (hover:hover) and (pointer:fine) { .social-link { cursor:none; } }
     @media (hover:none) {
       #social-links { gap:18px; margin-top:14px; }
       .social-link { opacity:0.45; }
