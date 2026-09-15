@@ -4,3 +4,6 @@
 !stems/*.mp3
 !sfx/*.mp3
 .env*
+# raw camera/screen captures before trim+loudnorm+transcode; only the
+# processed previews/*.mp4 output needs to reach the deploy
+visual-assets/
