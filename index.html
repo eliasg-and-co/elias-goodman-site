@@ -126,6 +126,8 @@
     .essay-item:hover .essay-title { color:var(--writing-stroke); }
     .essay-date { font-family:var(--mono); font-size:8px; font-weight:400; color:var(--ink-light); letter-spacing:.1em; }
     .built-item:hover .essay-title { color:var(--built-stroke); }
+    .built-item .essay-title { cursor:pointer; }
+    @media (hover:hover) and (pointer:fine) { .built-item .essay-title { cursor:none; } }
     .built-desc { display:block; font-family:var(--mono); font-size:9px; font-weight:400; line-height:1.7; color:var(--ink-light); margin-top:4px; }
     /* Built previews: a bezel per item that a short demo clip plays inside.
        phone = 9:19.5 portrait for a phone screen recording, screen = 16:10
@@ -357,7 +359,7 @@ if (!isMobile && cursor) {
 }
 function bindHover(scope) {
   if (isMobile) return;
-  (scope.querySelectorAll ? scope.querySelectorAll('a,button,.social-link') : []).forEach(el => {
+  (scope.querySelectorAll ? scope.querySelectorAll('a,button,.social-link,.built-item .essay-title') : []).forEach(el => {
     el.addEventListener('mouseenter', () => cursor && cursor.classList.add('hovering'));
     el.addEventListener('mouseleave', () => cursor && cursor.classList.remove('hovering'));
   });
@@ -909,6 +911,14 @@ function togglePreview(item){
   const b=item.querySelector(':scope > span > .built-preview-toggle'); b.textContent=isGroup?'collapse ↑':'hide ↑'; b.setAttribute('aria-expanded','true');
 }
 document.querySelectorAll('.overlay').forEach(ov=>{ov.addEventListener('click',e=>{if(e.target===ov)closeOverlay(ov.id);});});
+// Clicking a built item's title opens/closes its preview drawer, same as
+// clicking the preview/expand button itself (delegated -- these titles
+// exist for every current and future built-item, no per-item wiring).
+document.getElementById('overlay-built').addEventListener('click', e => {
+  const title = e.target.closest('.essay-title');
+  const item = title && title.closest('.built-item');
+  if (item) togglePreview(item);
+});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay.open').forEach(o=>closeOverlay(o.id));});
 // ── RIGHT NOW ──
 // Everything on this line is live and keyless, so the page stays static.
