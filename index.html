@@ -158,9 +158,18 @@
     .built-divider { display:flex; align-items:center; gap:10px; margin:18px 0 4px; }
     .built-divider::before { content:''; flex:1; height:2px; background:var(--ink); }
     .built-divider span { font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.2em; text-transform:uppercase; color:var(--ink-mid); white-space:nowrap; }
+    /* aspect-ratio here silently collapses to ~0 height in Safari -- the box
+       has no in-flow content (video/note are both position:absolute), and
+       Safari (unlike Chrome/Firefox) won't size a flex item's aspect-ratio
+       from width alone when it has nothing in normal flow to size against.
+       The ::before padding-top hack sizes the box the old-fashioned way: a
+       real in-flow block whose height is a percentage of its own width. */
     .device-frame { position:relative; overflow:hidden; background:var(--bg2); border:1px solid var(--ink-faint); box-shadow:3px 4px 0 var(--ink-faint); }
-    .device-frame.phone { width:min(196px,58%); aspect-ratio:9 / 19.5; border-radius:22px; }
-    .device-frame.screen { width:100%; aspect-ratio:16 / 10; border-radius:6px; }
+    .device-frame::before { content:''; display:block; }
+    .device-frame.phone { width:min(196px,58%); border-radius:22px; }
+    .device-frame.phone::before { padding-top:216.67%; }  /* 19.5 / 9 */
+    .device-frame.screen { width:100%; border-radius:6px; }
+    .device-frame.screen::before { padding-top:62.5%; }   /* 10 / 16 */
     .device-frame video { position:absolute; inset:0; width:100%; height:100%; display:block; object-fit:cover; object-position:center; background:#000; }
     /* Knicks capture is square, cropped into a wider 16:10 frame -- shift the
        crop window down so the Ableton data rows near the bottom stay visible
@@ -941,7 +950,10 @@ function togglePreview(item){
       frame.append(video,note); inner.append(frame); box.append(inner); item.append(box);
     }
     const video=box.querySelector('video');
-    if(item.dataset.preview&&!video.getAttribute('src')) video.src=item.dataset.preview; else if(box.querySelector('.loaded')) video.play().catch(()=>{});
+    if(item.dataset.preview&&!video.getAttribute('src')){
+      video.src=item.dataset.preview;
+      video.load();   // Safari won't start fetching a src set on a detached-at-creation <video> without an explicit load()
+    } else if(box.querySelector('.loaded')) video.play().catch(()=>{});
   }
   item.classList.add('previewing');
   const b=item.querySelector(':scope > span > .built-preview-toggle'); b.textContent=isGroup?'collapse ↑':'hide ↑'; b.setAttribute('aria-expanded','true');
