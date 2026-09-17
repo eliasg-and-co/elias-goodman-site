@@ -12,7 +12,7 @@
     :root {
       --bg:#f4f1ec; --bg2:#ece8e1;
       --ink:#1c1917; --ink-mid:#6b6560;
-      --ink-light:#b5afa8; --ink-faint:#ddd8d0;
+      --ink-light:#948d84; --ink-faint:#ddd8d0;
       --writing-stroke:#4a6fa5; --writing-bg:#edf1f8; --writing-border:#c2d0e8;
       --doux-stroke:#3d7a5a;   --doux-bg:#edf5f0;    --doux-border:#b8d9c8;
       --music-stroke:#c4612a;  --music-bg:#f8f0ea;   --music-border:#e8c4a8;
@@ -61,13 +61,13 @@
 
     #name-block { position:absolute; top:36px; left:48px; z-index:2; opacity:0; animation:fi .5s ease .05s forwards; }
     .site-name { font-family:var(--serif); font-weight:300; font-style:italic; font-size:clamp(38px,5.5vw,72px); line-height:1; letter-spacing:-.02em; color:var(--ink); user-select:none; }
-    .site-tagline { font-family:var(--mono); font-size:8px; font-weight:400; letter-spacing:.2em; color:var(--ink-light); text-transform:uppercase; margin-top:9px; }
+    .site-tagline { font-family:var(--mono); font-size:10px; font-weight:400; letter-spacing:.2em; color:var(--ink-light); text-transform:uppercase; margin-top:9px; }
 
     #mute-btn { position:fixed; top:50px; right:48px; z-index:20; font-family:var(--mono); font-size:11px; font-weight:600; letter-spacing:.2em; color:var(--ink-light); background:none; border:none; padding:4px 0; text-transform:uppercase; transition:color .2s; white-space:nowrap; opacity:0; animation:fi .5s ease .05s forwards; }
     @media (hover:none) { #mute-btn { cursor:pointer; right:24px; } }
     #mute-btn:hover { color:var(--ink); }
     #mute-btn.playing { color:var(--ink-mid); }
-    #headphones-note { position:fixed; top:76px; right:48px; z-index:20; font-family:var(--mono); font-size:7px; font-weight:400; letter-spacing:.2em; line-height:1.7; color:var(--ink-light); text-transform:uppercase; text-align:right; pointer-events:none; user-select:none; opacity:0; animation:fi .5s ease .05s forwards; }
+    #headphones-note { position:fixed; top:76px; right:48px; z-index:20; font-family:var(--mono); font-size:9px; font-weight:400; letter-spacing:.2em; line-height:1.7; color:var(--ink-light); text-transform:uppercase; text-align:right; pointer-events:none; user-select:none; opacity:0; animation:fi .5s ease .05s forwards; }
     #mute-btn.playing::before { content:''; position:absolute; top:50%; left:-14px; transform:translateY(-50%); width:6px; height:6px; border-radius:50%; background:var(--music-stroke); animation:pulse 1.8s ease-in-out infinite; }
     @keyframes pulse { 0%,100%{opacity:.3;transform:translateY(-50%) scale(0.8)} 50%{opacity:1;transform:translateY(-50%) scale(1.2)} }
 
@@ -75,7 +75,7 @@
     #drop-zone.active { border-color:var(--ink-mid); background:color-mix(in srgb,var(--ink-faint) 40%,transparent); }
     #drop-zone.ready  { border-color:var(--ink); border-style:solid; background:color-mix(in srgb,var(--ink-faint) 60%,transparent); transform:translate(-50%,-50%) scale(1.04); }
     #drop-zone.locked { border-color:var(--ink); border-style:solid; background:color-mix(in srgb,var(--ink-faint) 40%,transparent); transform:translate(-50%,-50%); }
-    .zone-label { font-family:var(--mono); font-size:9px; font-weight:400; letter-spacing:.18em; color:var(--ink-light); text-transform:uppercase; text-align:center; line-height:1.8; user-select:none; transition:opacity .2s; }
+    .zone-label { font-family:var(--mono); font-size:11px; font-weight:400; letter-spacing:.18em; color:var(--ink-light); text-transform:uppercase; text-align:center; line-height:1.8; user-select:none; transition:opacity .2s; }
 
     .icon { position:absolute; width:92px; display:flex; flex-direction:column; align-items:center; gap:9px; user-select:none; z-index:5; opacity:0; animation:fi .5s ease .35s forwards; }
     @media (hover:hover) and (pointer:fine) { .icon { cursor:none; } }
@@ -88,7 +88,7 @@
     .icon.in-zone  { position:fixed!important; z-index:6!important; pointer-events:none; }
     .icon-circle { width:72px; height:72px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:1.5px solid var(--ink-faint); background:var(--bg2); transition:transform .2s cubic-bezier(0.34,1.56,0.64,1),background .2s,border-color .2s; }
     .icon-circle svg { width:26px; height:26px; stroke:var(--ink-light); fill:none; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; transition:stroke .2s; }
-    .icon-label { font-family:var(--mono); font-size:9px; font-weight:400; letter-spacing:.18em; color:var(--ink-light); text-transform:uppercase; text-align:center; transition:color .2s; }
+    .icon-label { font-family:var(--mono); font-size:11px; font-weight:400; letter-spacing:.18em; color:var(--ink-light); text-transform:uppercase; text-align:center; transition:color .2s; }
     #icon-writing:hover .icon-circle,#icon-writing.dragging-now .icon-circle { background:var(--writing-bg);border-color:var(--writing-border);transform:scale(1.08) rotate(-2deg); }
     #icon-writing:hover .icon-circle svg,#icon-writing.dragging-now .icon-circle svg { stroke:var(--writing-stroke); }
     #icon-writing:hover .icon-label { color:var(--writing-stroke); }
@@ -116,7 +116,7 @@
     @keyframes cIn { from{transform:translateY(10px);opacity:0} to{transform:translateY(0);opacity:1} }
     .overlay-header { display:flex; align-items:center; justify-content:space-between; padding:18px 22px 14px; border-bottom:1px solid var(--ink-faint); position:sticky; top:0; background:var(--bg); z-index:1; }
     .overlay-title { font-family:var(--serif); font-style:italic; font-weight:300; font-size:22px; letter-spacing:-.01em; }
-    .overlay-close { font-family:var(--mono); font-size:8px; font-weight:400; color:var(--ink-light); background:none; border:none; letter-spacing:.12em; transition:color .15s; padding:4px 6px; }
+    .overlay-close { font-family:var(--mono); font-size:10px; font-weight:400; color:var(--ink-light); background:none; border:none; letter-spacing:.12em; transition:color .15s; padding:4px 6px; }
     @media (hover:none) { .overlay-close { cursor:pointer; } }
     .overlay-close:hover { color:var(--ink); }
     .overlay-body { padding:22px; }
@@ -124,29 +124,32 @@
     .essay-item:first-child { border-top:1px solid var(--ink-faint); }
     .essay-title { font-family:var(--serif); font-size:16px; font-style:italic; font-weight:300; color:var(--ink-mid); transition:color .15s; letter-spacing:-.01em; }
     .essay-item:hover .essay-title { color:var(--writing-stroke); }
-    .essay-date { font-family:var(--mono); font-size:8px; font-weight:400; color:var(--ink-light); letter-spacing:.1em; }
+    .essay-date { font-family:var(--mono); font-size:10px; font-weight:400; color:var(--ink-light); letter-spacing:.1em; }
     .built-item:hover .essay-title { color:var(--built-stroke); }
     .built-item .essay-title { cursor:pointer; }
     @media (hover:hover) and (pointer:fine) { .built-item .essay-title { cursor:none; } }
-    .built-desc { display:block; font-family:var(--mono); font-size:9px; font-weight:400; line-height:1.7; color:var(--ink-light); margin-top:4px; }
+    .built-desc { display:block; font-family:var(--mono); font-size:11px; font-weight:400; line-height:1.7; color:var(--ink-light); margin-top:4px; }
     /* Built previews: a bezel per item that a short demo clip plays inside.
        phone = 9:19.5 portrait for a phone screen recording, screen = 16:10
        for a desktop/Ableton capture. The frame stays empty with a note until
        the file exists in /previews/. */
-    .built-preview-toggle { display:inline-block; margin-top:7px; padding:0; font-family:var(--mono); font-size:8px; font-weight:400; letter-spacing:.16em; text-transform:uppercase; color:var(--built-stroke); background:none; border:none; opacity:.7; transition:opacity .15s; }
+    .built-preview-toggle { display:inline-block; margin-top:7px; padding:0; font-family:var(--mono); font-size:10px; font-weight:400; letter-spacing:.16em; text-transform:uppercase; color:var(--built-stroke); background:none; border:none; opacity:.7; transition:opacity .15s; }
     @media (hover:none) { .built-preview-toggle { cursor:pointer; } }
     .built-preview-toggle:hover { opacity:1; }
-    /* Kitchen-drawer open/close: grid-template-rows 0fr->1fr animates height
-       both ways with the same timing, no JS-measured heights and no display
-       toggle (which would make it snap shut instead of sliding closed). */
-    .built-preview { grid-column:1 / -1; display:grid; grid-template-rows:0fr; transition:grid-template-rows .5s cubic-bezier(0.16,1,0.3,1); }
+    /* Kitchen-drawer open/close: max-height 0->cap animates height both ways
+       with the same timing. Overflow:hidden here (not just on the inner) is
+       load-bearing: Safari's grid-template-rows 0fr->1fr trick fails to fully
+       clip a video element's native controls UI while collapsed, leaving a
+       sliver of the scrub bar visible as stray hairlines even after close --
+       max-height + overflow:hidden on the same box clips reliably everywhere. */
+    .built-preview { grid-column:1 / -1; overflow:hidden; max-height:0; transition:max-height .5s cubic-bezier(0.16,1,0.3,1); }
     /* Direct-child combinator, not descendant: a nested sub-item's own
        .built-preview must expand only when THAT item is previewing, not
        whenever some ancestor (e.g. the sports-sonified group) is open --
        a descendant selector here would cascade through every nesting level
        and force-expand every built preview box inside an open group. */
-    .built-item.previewing > .built-preview { grid-template-rows:1fr; }
-    .built-preview-inner { min-height:0; overflow:hidden; display:flex; justify-content:center; padding:0 0 6px; }
+    .built-item.previewing > .built-preview { max-height:640px; }
+    .built-preview-inner { display:flex; justify-content:center; padding:0 0 6px; }
     .sports-sub-list { width:100%; padding-left:18px; border-left:1px solid var(--ink-faint); }
     .sports-sub-list .built-item { padding:10px 0; }
     .sports-sub-list .built-item:first-child { border-top:none; }
@@ -154,7 +157,7 @@
     .sports-sub-list .built-preview-toggle { display:block; margin-top:10px; }
     .built-divider { display:flex; align-items:center; gap:10px; margin:18px 0 4px; }
     .built-divider::before { content:''; flex:1; height:2px; background:var(--ink); }
-    .built-divider span { font-family:var(--mono); font-size:8px; font-weight:600; letter-spacing:.2em; text-transform:uppercase; color:var(--ink-mid); white-space:nowrap; }
+    .built-divider span { font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.2em; text-transform:uppercase; color:var(--ink-mid); white-space:nowrap; }
     .device-frame { position:relative; overflow:hidden; background:var(--bg2); border:1px solid var(--ink-faint); box-shadow:3px 4px 0 var(--ink-faint); }
     .device-frame.phone { width:min(196px,58%); aspect-ratio:9 / 19.5; border-radius:22px; }
     .device-frame.screen { width:100%; aspect-ratio:16 / 10; border-radius:6px; }
@@ -168,27 +171,27 @@
     .device-frame.loaded .device-empty { display:none; }
     .doux-lead { font-family:var(--serif); font-style:italic; font-weight:300; font-size:18px; letter-spacing:-.01em; color:var(--ink); line-height:1.3; }
     .doux-desc-text + .doux-desc-text { margin-top:12px; }
-    .doux-link { font-family:var(--mono); font-size:9px; font-weight:400; color:var(--doux-stroke); text-decoration:none; display:block; margin-top:14px; }
-    .doux-desc-text { font-family:var(--mono); font-size:9px; font-weight:400; line-height:1.9; color:var(--ink-mid); margin-top:8px; }
+    .doux-link { font-family:var(--mono); font-size:11px; font-weight:400; color:var(--doux-stroke); text-decoration:none; display:block; margin-top:14px; }
+    .doux-desc-text { font-family:var(--mono); font-size:11px; font-weight:400; line-height:1.9; color:var(--ink-mid); margin-top:8px; }
     .music-track-item { display:grid; grid-template-columns:18px 1fr auto; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--ink-faint); }
     .music-track-item:first-of-type { border-top:1px solid var(--ink-faint); margin-top:16px; }
-    .music-num { font-family:var(--mono); font-size:8px; font-weight:400; color:var(--ink-light); }
+    .music-num { font-family:var(--mono); font-size:10px; font-weight:400; color:var(--ink-light); }
     .music-name { font-family:var(--serif); font-style:italic; font-weight:300; font-size:16px; letter-spacing:-.01em; }
-    .music-status { font-family:var(--mono); font-size:8px; font-weight:400; color:var(--ink-light); letter-spacing:.1em; }
-    .contact-intro { font-family:var(--mono); font-size:9px; font-weight:400; line-height:1.9; color:var(--ink-mid); margin-bottom:16px; }
+    .music-status { font-family:var(--mono); font-size:10px; font-weight:400; color:var(--ink-light); letter-spacing:.1em; }
+    .contact-intro { font-family:var(--mono); font-size:11px; font-weight:400; line-height:1.9; color:var(--ink-mid); margin-bottom:16px; }
     .contact-field { display:flex; flex-direction:column; gap:5px; margin-bottom:14px; }
-    .contact-field label { font-family:var(--mono); font-size:7px; font-weight:400; letter-spacing:.2em; color:var(--ink-light); text-transform:uppercase; }
+    .contact-field label { font-family:var(--mono); font-size:9px; font-weight:400; letter-spacing:.2em; color:var(--ink-light); text-transform:uppercase; }
     .contact-field input,.contact-field textarea { background:var(--bg2); border:1px solid var(--ink-faint); padding:9px 11px; font-family:var(--serif); font-size:15px; font-weight:300; color:var(--ink); outline:none; resize:none; transition:border-color .15s; cursor:auto; }
     .contact-field input:focus,.contact-field textarea:focus { border-color:var(--contact-stroke); }
-    .contact-submit { font-family:var(--mono); font-size:8px; font-weight:400; letter-spacing:.2em; text-transform:uppercase; background:var(--ink); color:var(--bg); border:none; padding:11px 22px; width:100%; margin-top:6px; transition:background .15s; }
+    .contact-submit { font-family:var(--mono); font-size:10px; font-weight:400; letter-spacing:.2em; text-transform:uppercase; background:var(--ink); color:var(--bg); border:none; padding:11px 22px; width:100%; margin-top:6px; transition:background .15s; }
     @media (hover:none) { .contact-submit { cursor:pointer; } }
     .contact-submit:hover { background:var(--contact-stroke); }
-    .contact-email { font-family:var(--mono); font-size:8px; font-weight:400; color:var(--ink-light); margin-top:10px; letter-spacing:.08em; }
+    .contact-email { font-family:var(--mono); font-size:10px; font-weight:400; color:var(--ink-light); margin-top:10px; letter-spacing:.08em; }
     .contact-email a { color:var(--contact-stroke); text-decoration:none; }
 
     #hero-below { position:fixed; left:48px; right:48px; bottom:26px; z-index:5; display:flex; flex-direction:column; gap:10px; opacity:0; animation:fi .5s ease .65s forwards; pointer-events:none; }
     #hero-below > * { pointer-events:auto; }
-    #right-now { font-family:var(--mono); font-size:9px; font-weight:400; letter-spacing:.1em; line-height:1.7; color:var(--ink-light); min-height:12px; }
+    #right-now { font-family:var(--mono); font-size:11px; font-weight:400; letter-spacing:.1em; line-height:1.7; color:var(--ink-light); min-height:12px; }
     .rn-seg { display:inline-block; }
 
     @keyframes fi { to{opacity:1} }
@@ -215,8 +218,17 @@
       #headphones-note { top:54px; right:24px; }
       #stage { --cy:45%; --ring-r:36vmin; }
       #drop-zone { width:130px; height:130px; }
-      #hero-below { left:24px; right:24px; bottom:9px; gap:5px; }
+      #hero-below { left:0; right:0; bottom:9px; gap:5px; }
+      /* Ticker tape: the line is wider than the screen, so instead of
+         wrapping or panning off-edge it scrolls in a single-file loop.
+         The track holds two identical copies of the content back to back;
+         animating exactly -50% of its own width hands off invisibly from
+         the end of copy one to the start of copy two. */
+      #right-now { overflow:hidden; white-space:nowrap; min-height:auto; padding:0 24px; -webkit-mask-image:linear-gradient(to right,transparent,#000 24px,#000 calc(100% - 24px),transparent); mask-image:linear-gradient(to right,transparent,#000 24px,#000 calc(100% - 24px),transparent); }
+      #right-now .rn-track { display:inline-flex; width:max-content; animation:rn-scroll 28s linear infinite; }
+      #right-now .rn-group { white-space:nowrap; padding-right:2.5em; }
     }
+    @keyframes rn-scroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }
   </style>
 </head>
 <body>
@@ -644,9 +656,21 @@ function setupBioCanvas() {
   layoutWords();
 }
 
+// Shift every word on one already-laid-out line so the line sits centered
+// within [margin, margin+maxW] instead of flush left. endX is the pen
+// position right after the line's last word (includes one trailing space,
+// close enough for visual centering).
+function centerLine(out, lineStart, endX, margin, maxW) {
+  const offset = (maxW - (endX - margin)) / 2;
+  if (offset <= 0) return;
+  for (let i = lineStart; i < out.length; i++) { out[i].homeX += offset; out[i].x += offset; }
+}
+
 // Lay the paragraphs out at one candidate size. Returns the words and the
-// baseline of the last line so the caller can test the fit.
-function buildWords(size, margin, maxW, homeTop) {
+// baseline of the last line so the caller can test the fit. On mobile each
+// line is re-centered after it's known (desktop keeps the left-aligned
+// layout, which already reads fine there).
+function buildWords(size, margin, maxW, homeTop, center) {
   FONT_SIZE = size;
   LINE_H = size * 1.72;
   FONT = `italic 300 ${size}px "Fraunces", Georgia, serif`;
@@ -655,25 +679,26 @@ function buildWords(size, margin, maxW, homeTop) {
   let y = homeTop + size;
   for (let p = 0; p < BIO_PARAGRAPHS.length; p++) {
     if (p > 0) y += LINE_H * 1.4;   // next line, plus a gap between beats
-    let x = margin;
+    let x = margin, lineStart = out.length;
     for (const word of BIO_PARAGRAPHS[p].split(' ')) {
       const ww = bctx.measureText(word + ' ').width;
-      if (x + ww > margin + maxW && x > margin) { x = margin; y += LINE_H; }
+      if (x + ww > margin + maxW && x > margin) {
+        if (center) centerLine(out, lineStart, x, margin, maxW);
+        lineStart = out.length; x = margin; y += LINE_H;
+      }
       out.push({ text: word, homeX: x, homeY: y, x: x, y: y, vx: 0, vy: 0, hot: false });
       x += ww;
     }
+    if (center) centerLine(out, lineStart, x, margin, maxW);
   }
   return { out: out, bottom: y };
 }
 
 // Largest size at or below FONT_MAX whose last baseline clears whatever is
 // pinned below the hero. Reports fits:false if it bottoms out at FONT_MIN.
-function fitHero(margin, maxW, homeTop) {
-  const below = document.getElementById('hero-below');
-  const reserve = below ? canvasH - below.getBoundingClientRect().top + 12 : 40;
-  const limit = canvasH - reserve;
+function fitHero(margin, maxW, homeTop, limit, center) {
   for (let size = FONT_MAX; ; size -= 0.25) {
-    const built = buildWords(size, margin, maxW, homeTop);
+    const built = buildWords(size, margin, maxW, homeTop, center);
     if (built.bottom <= limit) { built.fits = true; return built; }
     if (size <= FONT_MIN) { built.fits = false; return built; }
   }
@@ -687,10 +712,21 @@ function layoutWords() {
   // a fixed 92px, so on short viewports a fraction alone lands on the labels.
   const lower = document.getElementById('icon-music');
   const iconsBottom = lower ? lower.getBoundingClientRect().bottom : 0;
-  const homeTop = Math.max(canvasH * (isMobile ? 0.67 : 0.73), iconsBottom + (isMobile ? 16 : 24));
+  const gap = isMobile ? 16 : 24;
+  const minTop = Math.max(canvasH * (isMobile ? 0.67 : 0.73), iconsBottom + gap);
+  const below = document.getElementById('hero-below');
+  const reserve = below ? canvasH - below.getBoundingClientRect().top + 12 : 40;
+  const limit = canvasH - reserve;
   // Largest legible size that fits, or none -- a landscape phone has no
   // room for a hero and the copy is still in .sr-only for screen readers.
-  const built = fitHero(margin, maxW, homeTop);
+  const built = fitHero(margin, maxW, minTop, limit, isMobile);
+  // On mobile, also center the block vertically in the blank space between
+  // the icon ring and the ticker line, instead of hugging the top of it.
+  if (built.fits && isMobile) {
+    const room = limit - minTop, used = built.bottom - minTop;
+    const shift = Math.max(0, (room - used) / 2);
+    if (shift > 0) for (const w of built.out) { w.homeY += shift; w.y += shift; }
+  }
   words = built.fits ? built.out : [];
 }
 
@@ -1015,14 +1051,34 @@ function sportsSegment(){
 }
 function runSegment(){ return ['last run: '+LAST_RUN.miles+' mi in '+LAST_RUN.time+', '+LAST_RUN.pace+'/mi']; }
 
+// Builds one "right now: seg · seg · seg" run, as a fragment so the mobile
+// ticker can lay down two identical copies back to back (see the rn-track
+// CSS: the loop hands off cleanly only because both halves match exactly).
+function buildRightNowGroup(parts){
+  const g = document.createDocumentFragment();
+  g.append('right now: ');
+  parts.forEach((p,i)=>{
+    if(i) g.append(' · ');
+    const seg = document.createElement('span'); seg.className='rn-seg'; seg.textContent=p;
+    g.append(seg);
+  });
+  return g;
+}
 function renderRightNow(){
   const el = document.getElementById('right-now'); if(!el) return;
   const parts = [...feed.weather, ...feed.subway, ...sportsSegment(), ...runSegment()];
   const before = el.offsetHeight;
-  el.replaceChildren('right now: ', ...parts.flatMap((p,i)=>{
-    const seg = document.createElement('span'); seg.className='rn-seg'; seg.textContent=p;
-    return i ? [' · ', seg] : [seg];
-  }));
+  if(isMobile){
+    const track = document.createElement('div'); track.className='rn-track';
+    for(let i=0;i<2;i++){
+      const group = document.createElement('span'); group.className='rn-group';
+      group.append(buildRightNowGroup(parts));
+      track.append(group);
+    }
+    el.replaceChildren(track);
+  } else {
+    el.replaceChildren(buildRightNowGroup(parts));
+  }
   // The hero is sized to clear this line; re-fit it if the line just wrapped.
   if(canvasW && el.offsetHeight!==before) layoutWords();
 }
